@@ -8,21 +8,24 @@ from threading import RLock
 
 LOG = logging.getLogger(__name__)
 
-MAX_BALANCE = 20
-MAX_BASS = 14
-MAX_TREBLE = 14
-MAX_VOLUME = 38
+MAX_VOLUME = 100
 
+# currently the D1 and AVM models support same protocols as D2
+# however, we may change the this as there is more complex
+# configuration needed in the future
 ANTHEM_D2 = 'anthem-d2'
+ANTHEM_D1 = 'anthem-d2'
+ANTHEM_AVM20 = 'anthem-d2'
+ANTHEM_AVM30 = 'anthem-d2'
 SUPPORTED_AMP_TYPES = [ ANTHEM_D2 ]
 
 # technically zone = {amp_number}{zone_num_within_amp_1-6} (e.g. 11 = amp number 1, zone 1)
 RS232_COMMANDS = {
-    ANTHEM_D2: {
-        'power_on_zone':  'P{zone}P1', # zone = 1 (main), 2, 3
-        'power_off_zone': 'P{zone}P0',
+    ANTHEM_D2: {        
+        'power_on':       'P{zone}P1', # zone = 1 (main), 2, 3
+        'power_off':      'P{zone}P0',
 
-        'set_volume':     'P{zone}VM{level}',
+        'set_volume':     'P{zone}VM{volume}',
         'volume_up':      'P{zone}VMU',
         'volume_down':    'P{zone}VMD',
 
@@ -31,6 +34,10 @@ RS232_COMMANDS = {
         'mute_toggle':    'P{zone}MT',
 
         'source_select':  'P{zone}S{source}',
+
+        'tune_up':        'T+',
+        'tune_down':      'T-',
+
         'set_fm':         'TFT{channel}',   # channel = 4 digits
         'set_am':         'TAT{channel}',   # channel = 4 digits
     }
@@ -117,16 +124,16 @@ def _format(amp_type: str, format_code: str, args = {}):
 def _set_power_cmd(amp_type, zone: int, power: bool) -> bytes:
     assert zone in _get_config(amp_type, 'zones')
     if power:
-        return _format(amp_type, 'power_on')
+        return _format(amp_type, 'power_on', args = { 'zone': zone })
     else:
-        return _format(amp_type, 'power_off')
+        return _format(amp_type, 'power_off', args = { 'zone': zone })
 
 def _set_mute_cmd(amp_type, zone: int, mute: bool) -> bytes:
     assert zone in _get_config(amp_type, 'zones')
     if mute:
-        return _format(amp_type, 'mute_on')
+        return _format(amp_type, 'mute_on', args = { 'zone': zone })
     else:
-        return _format(amp_type, 'mute_off')
+        return _format(amp_type, 'mute_off', args = { 'zone': zone })
     
 def _set_volume_cmd(amp_type, zone: int, volume: int) -> bytes:
     assert zone in _get_config(amp_type, 'zones')

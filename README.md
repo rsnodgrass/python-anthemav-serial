@@ -1,4 +1,4 @@
-# Python RS232 API for Anthem Statement D2 Pre-Amplifiers
+# Python RS232 API for Anthem Pre-Amplifiers
 
 Library for communicating via RS232 serial to them Anthem Statement D2 pre-amp. This may work with other Anthem pre-amplifiers, but this has not been tested with them.
 
@@ -33,9 +33,12 @@ loop.run_until_complete(main(loop))
 
 ## Supported Anthem Pre-Amps
 
-|  Model(s)                  | Type Code | Notes |
-|  ------------------------- | --------- | ----- |
-|  Statement D2, D2v, D2v 3D | ANTHEM_D2 | does not support triggers/IR |
+|  Model(s)                  | Type Code    | Notes |
+|  ------------------------- | ------------ | ----- |
+|  Statement D2, D2v, D2v 3D | ANTHEM_D2    | |
+|  Statement D1              | ANTHEM_D1    | |
+|  AVM 30                    | ANTHEM_AVM30 | |
+|  AVM 20                    | ANTHEM_AVM20 | |
 
 ## See Also
 
