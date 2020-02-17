@@ -7,8 +7,9 @@ Library for communicating via RS232 serial to them Anthem Statement D2 pre-amp. 
 ```python
 from pyanthem import get_amp_controller, ANTHEM_D2
 
-amp = get_amp_controller(ANTHEM_D2, '/dev/ttyUSB0')
-amp.
+type_code = ANTHEM_D2
+amp = get_amp_controller(type_code, '/dev/ttyUSB0')
+amp.mute_on(1)
 ```
 
 See also [example.py](example.py) for a more complete example.
