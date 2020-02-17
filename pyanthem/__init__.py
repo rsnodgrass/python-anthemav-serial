@@ -22,13 +22,16 @@ SUPPORTED_AMP_TYPES = [ ANTHEM_D2 ]
 # technically zone = {amp_number}{zone_num_within_amp_1-6} (e.g. 11 = amp number 1, zone 1)
 RS232_COMMANDS = {
     ANTHEM_D2: {        
-        'power_on':       'P{zone}P1', # zone = 1 (main), 2, 3
+        'power_on':       'P{zone}P1',   # zone = 1 (main), 2, 3
         'power_off':      'P{zone}P0',
-
+        'status':         'P{zone}?',    # unknown if this works
+        
+        'current_volume': 'P{zone}VM?',  # unknown if this works
         'set_volume':     'P{zone}VM{volume}',
         'volume_up':      'P{zone}VMU',
         'volume_down':    'P{zone}VMD',
 
+        'current_mute':   'P{zone}M?',  # unknown if this works
         'mute_on':        'P{zone}M1',
         'mute_off':       'P{zone}M0',
         'mute_toggle':    'P{zone}MT',
@@ -43,7 +46,7 @@ RS232_COMMANDS = {
     }
 }
 
-PROTOCOL_CONFIG ={
+AMP_CONFIG ={
     ANTHEM_D2: {
         'protocol_eol':    b'\x0a',
         'sources': {
@@ -52,11 +55,22 @@ PROTOCOL_CONFIG ={
             '2': '6CH',
             '3': 'TAPE',
             '4': 'TUNER',
+            
             '5': 'DVD',
+            'd': 'DVD 2',
+            'e': 'DVD 3',
+            'f': 'DVD 4'
+
             '6': 'TV',
+            'g': 'TV 2'
+            'h': 'TV 3'
+            'i': 'TV 4'
+            
             '7': 'SAT',
+            'j': 'SAT 2'
+            
             '8': 'VCR',
-            '9': 'AUX'
+            '9': 'AUX',
         }
     }
 }
@@ -73,7 +87,7 @@ SERIAL_INIT_ARGS = {
 }
 
 def _get_config(amp_type: str, key: str):
-    config = AMP_TYPE_CONFIG.get(amp_type)
+    config = AMP_CONFIG.get(amp_type)
     if config:
         return config.get(key)
     LOG.error("Invalid amp type '%s' config key '%s'; returning None", amp_type, key)
@@ -328,7 +342,7 @@ def get_async_amp_controller(amp_type, port_url, loop):
                     raise
 
     _, protocol = yield from create_serial_connection(loop,
-                                                      functools.partial(AmpControlProtocol, AMP_TYPE_CONFIG.get(amp_type), loop),
+                                                      functools.partial(AmpControlProtocol, AMP_CONFIG.get(amp_type), loop),
                                                       port_url,
                                                       **SERIAL_INIT_ARGS)
     return AmpControlAsync(amp_type, protocol)

@@ -8,6 +8,7 @@ Library for controlling Anthem pre-amplifiers (e.g. Statement D2) via RS232 seri
 |  ------------------------- | ------------ | ----- |
 |  Statement D2, D2v, D2v 3D | ANTHEM_D2    | |
 |  Statement D1              | ANTHEM_D1    | |
+|  AVM 50 / AVM 60           |              | unknown |
 |  AVM 30                    | ANTHEM_AVM30 | |
 |  AVM 20                    | ANTHEM_AVM20 | |
 |  MRX 500                   |              | unknown if supported |
