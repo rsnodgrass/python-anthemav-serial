@@ -41,6 +41,10 @@ loop.run_until_complete(main(loop))
 |  AVM 20                    | ANTHEM_AVM20 | |
 |  MRX 500                   |              | unknown if supported |
 
+## Known Issues
+
+* cannot query the existing state of the pre-amps (e.g. current volume, sources, etc)
+
 ## See Also
 
 * [Anthem D2/D2v/AVM50/AVM50v/ARC1 tweaking guide (AVS Forum)](https://www.avsforum.com/forum/90-receivers-amps-processors/678260-anthem-d2-d2v-avm50-avm50v-arc1-tweaking-guide-1510.html)
