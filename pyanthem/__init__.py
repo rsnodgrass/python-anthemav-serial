@@ -52,7 +52,7 @@ RS232_COMMANDS = {
         
         'fm_tune':        'TFT{channel}',   # channel = xxx.x (87.5 to 107.9, in 0.1 MHz step)
         'fm_preset':      'TFP{bank}{preset}',
-        'am_tune':        'TAT{channel}',   # channel = xxxxs (540 to 1600, in 10 KHz step)
+        'am_tune':        'TAT{channel:04}',   # channel = xxxxs (540 to 1600, in 10 KHz step)
         'am_preset':      'TAP{bank}{preset}',
         'tuner_frequeny': 'TT?',            # returns TATxxxx or TFTxxx.x where
         'tuner_up':       'T+',
@@ -66,6 +66,13 @@ RS232_COMMANDS = {
         'headphone_mute_on': 'HM1',
         'headphone_mute_off': 'HM0',
         'headphone_mute_toggle': 'HMT',
+
+        'set_time_format': 'STF{on_off}', # on = 24 hour, off = 12 hour
+        'set_time':  'STC{hour:02}:{min:02}', # 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+        'set_day_of_week':  'STD{dow}',  # dow = 1 (Sunday) to 7 (Saturday)
+        
+        'set_baud_rate':    'SSB{baud_rate}', # baud_rate = 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200
+        'version':  '?', # returns: unit type, revision# , build date (e.g. "AVM 2,Version 1.00,Jun 26 2000"
     }
 }
 
