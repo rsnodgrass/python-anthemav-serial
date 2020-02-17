@@ -30,26 +30,42 @@ RS232_COMMANDS = {
     ANTHEM_D2: {        
         'power_on':       'P{zone}P1',   # zone = 1 (main), 2, 3
         'power_off':      'P{zone}P0',
-        'status':         'P{zone}?',    # unknown if this works
+        'power_status':   'P{zone}P?',   # returns: P{zone}P{on_off}
+
+        'zone_status':    'P{zone}?',    # returns P{source}V{volume}M{mute}
         
-        'current_volume': 'P{zone}VM?',  # unknown if this works
-        'set_volume':     'P{zone}VM{volume}',
+        'set_volume':     'P{zone}VM{volume}', # volume (format sxx.x) = volume to sxx.xx dB where sxx.x = MainMaxVol to -95.5 dB in 0.5 dB steps
         'volume_up':      'P{zone}VMU',
         'volume_down':    'P{zone}VMD',
+        'volume_status':  'P{zone}VM?',  # returns: P{zone}VM{sxx.x}
 
-        'current_mute':   'P{zone}M?',  # unknown if this works
         'mute_on':        'P{zone}M1',
         'mute_off':       'P{zone}M0',
         'mute_toggle':    'P{zone}MT',
+        'mute_status':    'P{zone}M?',   # returns: P{zone}M{on_off}
 
-        'current_source': 'P{zone}P?',  # unknown if this works
         'source_select':  'P{zone}S{source}',
+        'source_status':  'P{zone}S?',  # unknown if this works
 
-        'tune_up':        'T+',
-        'tune_down':      'T-',
+        'trigger_on':     't{trigger}T1',
+        'trigger_off':    't{trigger}T0',
+        
+        'fm_tune':        'TFT{channel}',   # channel = xxx.x (87.5 to 107.9, in 0.1 MHz step)
+        'fm_preset':      'TFP{bank}{preset}',
+        'am_tune':        'TAT{channel}',   # channel = xxxxs (540 to 1600, in 10 KHz step)
+        'am_preset':      'TAP{bank}{preset}',
+        'tuner_frequeny': 'TT?',            # returns TATxxxx or TFTxxx.x where
+        'tuner_up':       'T+',
+        'tuner_down':     'T-',
 
-        'set_fm':         'TFT{channel}',   # channel = 4 digits
-        'set_am':         'TAT{channel}',   # channel = 4 digits
+        'sleep_timer':    'P1Z{sleep_mode}', # 0 = off; 1 = 30 min; 2 = 60 min; 3 = 90 min
+
+        'headphone_status': 'H?', # returns HS{source}V{volume}M{mute}
+        'headphone_volume_up': 'HVU',
+        'headphone_volume_down': 'HVD',
+        'headphone_mute_on': 'HM1',
+        'headphone_mute_off': 'HM0',
+        'headphone_mute_toggle': 'HMT',
     }
 }
 
