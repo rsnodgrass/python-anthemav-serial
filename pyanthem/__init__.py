@@ -6,6 +6,12 @@ import serial
 from functools import wraps
 from threading import RLock
 
+# FIXME:
+# The Anthem has the ability to set a "transmit" status on its RS232 port, which, acc'd the documentation, causes the unit to send ASCII data out any time it's state is changes, either by manual adjustment of the front panel or by the transmission of RS232 commands.
+#
+# - should we limit MAX volume by default; and have a way to disable 'safety'?
+#   could be an issue with damaging speakers
+
 LOG = logging.getLogger(__name__)
 
 MAX_VOLUME = 100
@@ -36,6 +42,7 @@ RS232_COMMANDS = {
         'mute_off':       'P{zone}M0',
         'mute_toggle':    'P{zone}MT',
 
+        'current_source': 'P{zone}P?',  # unknown if this works
         'source_select':  'P{zone}S{source}',
 
         'tune_up':        'T+',
@@ -48,7 +55,7 @@ RS232_COMMANDS = {
 
 AMP_CONFIG ={
     ANTHEM_D2: {
-        'protocol_eol':    b'\x0a',
+        'protocol_eol':    b'\x0a',  # x0A or Carriage Return at the end of the string
         'sources': {
             '0': 'CD',
             '1': 'STEREO',

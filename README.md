@@ -48,3 +48,9 @@ loop.run_until_complete(main(loop))
 ## See Also
 
 * [Anthem D2/D2v/AVM50/AVM50v/ARC1 tweaking guide (AVS Forum)](https://www.avsforum.com/forum/90-receivers-amps-processors/678260-anthem-d2-d2v-avm50-avm50v-arc1-tweaking-guide-1510.html)
+
+Details on RS232 protocol:
+
+* [AVM 2 Serial Programming](https://www.avsforum.com/forum/26-home-theater-computers/188206-rs232-control-avm-2-help.html#post1521446)
+* [Serial commands and feedback from Anthem pre/pro](http://allonis.com/forum/viewtopic.php?t=2185)
+* http://www.remotecentral.com/cgi-bin/mboard/rc-touch/thread.cgi?2525

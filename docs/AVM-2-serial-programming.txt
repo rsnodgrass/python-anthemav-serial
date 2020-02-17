@@ -1,0 +1,408 @@
+AVM 2 Serial Programming
+
+The serial command set of the AVM 2 Version 1.11 software is documented below. The serial port is set to baud rate of 19,200, 8 data bits, no parity, 1 stop bit by default. These settings can be changed via the set-up menus (Menu 8 Triggers/IR/RS-232). Command lines must be terminated by an ASCII line feed (0x0a hexadecimal) and be no longer than 64 bytes (including the line feed terminator). For example, to turn the main zone on, send:
+
+P1P1<lf>
+
+where <lf> is an ASCII line feed. Multiple commands can be placed on a single command line if separated by a semicolon. For example, to turn the main zone on and switch to the tuner, and tune to FM pre-set 2 on FM pre-set bank 1 send:
+
+P1P1;P1S4;TFP12<lf>
+
+Command processing begins when the first semicolon separator or line feed terminator is received. If there is an error in the command an error message is sent back. If the command is successfully executed no response is sent back.
+
+If Tx Status is set to â€™yesâ€™ in the set-up menus (Menu 8 Triggers/IR/RS-232 item i. Tx Status) all changes of state are sent by the AVM 2 on the serial port in the same format as the command set. This means that the AVM 2 will echo all serial, IR, front panel button and volume knob activity as well as changes of state due to changes in the input audio (eg. source bitstream change from DTS to Dolby Digital).
+
+
+21 November 2000
+AVM 2 Command Set
+Main Zone Specific Commands
+Command Parameters Description
+P1? Query Main zone status
+returns P1SuVvMwDxEy where u is the current source as defined below,
+v is the current volume in dB, w is the mute status as defined below,
+x is the decoder mode as defined below and y is the current effect as defined below
+P1P x Main Zone Power on/off
+where x = 0,1 (off, on)
+P1P? Query Main Zone Power status
+returns P1Px where x is as defined above
+P1S x Main zone source selection
+where x = 0,1,2,3...8 (0=direct, 1=disc1, 2=disc2 , 3=tape, 4=tuner, .. 8=aux)
+P1S? Query Main zone source selection
+returns P1Sx where x is as defined above
+P1M x Mute/un-mute the Main zone
+where x = 0,1 (un-mutes, mutes)
+P1MT Mute/Unmute toggle on Main zone
+P1VM sxx.xx Set Main master volume to sxx.xx dB
+where sxx.x = MainMaxVol to -95.5 dB in 0.5 dB steps
+P1VM? Query Main master volume in dB
+returns P1VMsxx.x where sxx.x is as defined above
+P1VMU Increase Main master volume (similar to vol up on remote)
+P1VMD Decrease Main master volume (similar to vol down on remote)
+P1VC sxx.xx Set Main center volume to sxx.xx dB
+where sxx.x = +10.0 to -10.0 dB in .5 dB steps
+P1VR sxx.xx Set Main rear volume to sxx.xx dB
+where sxx.x = +10.0 to -10.0 dB in .5 dB steps
+P1VS ysxx.xx Set Main sub volume to sxx.xx dB
+where y = 0,1,2,...6 (current mode, Dolby AC-3 source, DTS source, MPEG source,Stereo source, Dolby Pro-Logic source, Direct source)
+where sxx.x = +20.0 to -30.0 dB in .5 dB steps
+P1VL ysxx.xx Set Main LFE volume to sxx.xx dB
+where y = 0,1,2,3 (current mode, Dolby AC-3 source, DTS source, MPEG source)
+where sxx.x = +0.0 to -10.0 dB in .5 dB steps
+P1LM sxx.xx Set Main master balance to sxx.xx dB
+where sxx.x = +10.0 to -10.0 dB in .5 dB steps
+P1LF sxx.xx Set Main front balance to sxx.xx dB
+where sxx.x = +10.0 to -10.0 dB in .5 dB steps
+P1LR sxx.xx Set Main rear balance to sxx.xx dB
+where sxx.x = +10.0 to -10.0 dB in .5 dB steps
+P1BM sxx.xx Set Main master bass to sxx.xx dB
+where sxx.x = +12.0 to -12.0 dB in .5 dB steps
+P1BF sxx.xx Set Main front bass to sxx.xx dB
+where sxx.x = +12.0 to -12.0 dB in .5 dB steps
+P1BR sxx.xx Set Main rear bass to sxx.xx dB
+where sxx.x = +12.0 to -12.0 dB in .5 dB steps
+P1TM sxx.xx Set Main master treble to sxx.xx dB
+where sxx.x = +12.0 to -12.0 dB in .5 dB steps
+P1TF sxx.xx Set Main front treble to sxx.xx dB
+where sxx.x = +12.0 to -12.0 dB in .5 dB steps
+P1TR sxx.xx Set Main rear treble to sxx.xx dB
+where sxx.x = +12.0 to -12.0 dB in .5 dB steps
+P1TB x Set Main tone controls
+where x = 0,1 (bypassed, enabled)
+P1E yx Set surrounds effects
+where y = 1,2,3,..8 (1=disc1, 2=disc2 , 3=tape, 4=tuner, .. 8=aux)
+where x = 0,1,2,â€¦9 (off, Pro Logic, hall, theater, stadium, club, church, 5-channel stereo, 5-channel mono, 96KHz stereo)
+P1E? Query current surrounds effects
+returns P1Eyx where yx are as defined above
+P1C x Set amount of dynamic range compression in Dolby Digital modes
+where x = 0,1,2 (normal, reduced, late night)
+P1s Show status of Main zone on front panel and on TV (if OS enabled)
+P1SS x Source seek in Main zone
+where x = +,- (seek up, seek down)
+P1Z x Turn On Sleep Timer in Main zone
+where x = 0,1,2,3 (Off, 30 min, 60 min, 90 min)
+P3? Query Rec zone status
+returns P3Su where u is the current source as defined below
+P3S x Rec source selection
+where x=0 to 8 (0=Main, 1=disc1, 2=disc2 , 3=tape, 4=tuner, .. 8=aux)
+P3S? Query Rec zone source selection
+returns P3Sx where x is as defined above
+H? Query headphone status
+returns HSuVvMw where u is the current source as defined below,
+v is the current volume in dB, and w is the mute status as defined below
+HV sxx.xx Set headphone volume to sxx.xx dB
+where sxx.xx= +10.00 to -70.0 dB in 1.25 dB steps
+HV? Query headphone volume in dB
+returns HVsxx.x where sxx.x is as defined above
+HVU Increase headphone volume (similar to vol up on remote)
+HVD Decrease headphone volume (similar to vol down on remote)
+Hb sxx.xx Set headphone balance (attenuation) to sxx.xx dB
+where sxx.xx= +20.00 to -20.00 dB in 1.25 dB steps
+HT sxx.xx Set headphone treble to sxx.xx dB
+where sxx.xx= +14.0 to -14.0 dB in 2.0 dB steps
+HB sxx.xx Set headphone bass to sxx.xx dB
+where sxx.xx= +14.0 to -14.0 dB in 2.0 dB steps
+HM x Mutes/un-mutes headphone
+where x= 0,1 (un-mutes, mutes)
+HMT Mute/Unmute toggle on headphone
+Main Zone Specific Serial Echos/Query
+Command Parameters Description
+P1D yx current decoder mode for source y is x
+where y = 0,1,2,3...8 (0=direct, 1=disc1, 2=disc2 , 3=tape, 4=tuner, .. 8=aux)
+where x = 0,1,2,3â€¦5 (0=AC3, 1=DTS, 2=MPEG, 3=Stereo, 4=ProLogic, 5=Direct)
+P1D? Query current decoder mode
+returns P1Dyx where yx are as defined above
+Zone2 Specific Commands
+Command Parameters Description
+P2? Query Zone2 status
+returns P2SuVvMw where u is the current source as defined below,
+v is the current volume in dB, and w is the mute status as defined below
+P2P x Zone2 Power on/off
+where x = 0,1 (off, on)
+P2P? Query Zone2 Power status
+returns P2Px where x is as defined above
+P2S x Zone2 source selection
+where x = 0,1,2,3...8 (0=Main, 1=disc1, 2=disc2 , 3=tape, 4=tuner, .. 8=aux)
+P2S? Query Zone2 source selection
+returns P2Sx where x is as defined above
+P2V sxx.xx Set Zone2 volume to sxx.xx dB
+where sxx.xx= Zone2MaxVol to -70.0 dB in 1.25 dB steps
+P2V? Query Zone2 volume in dB
+returns P2Vsxx.x where sxx.x is as defined above
+P2VU Increase Zone2 volume (similar to vol up on remote)
+P2VD Decrease Zone2 volume (similar to vol down on remote)
+P2L sxx.xx Set Zone2 balance to sxx.xx dB
+where sxx.xx= +20.00 to -20.00 dB in 1.25 dB steps
+P2T sxx.xx Set Zone2 treble to sxx.xx dB
+where sxx.xx= +14.0 to -14.0 dB in 2.0 dB steps
+P2B sxx.xx Set Zone2 bass to sxx.xx dB
+where sxx.xx= +14.0 to -14.0 dB in 2.0 dB steps
+P2M x Mute/un-mute Zone2
+where x= 0,1 (un-mutes, mutes)
+P2MT Mute/Unmute toggle on Zone2
+P2TB x Set Zone2 tone controls
+where x=0,1 (bypassed, enabled)
+P2s Show status of Zone2 on front panel and on TV (if OS enabled)
+P2SS x Source seek in Zone2
+where x = +,-
+P2Z x Turn On Sleep Timer in Zone2
+where x = 0,1,2,3 (Off, 30 min, 60 min, 90 min)
+Main & Zone2 Common Commands
+Command Parameters Description
+TAT xxxx Set tuner to AM band, frequency xxxx KHz
+where xxxx = 540 to 1600, in 10 KHz step
+TFT xxx.x Set tuner to FM band, frequency xxx.x MHz
+where xxxx = 87.5 to 107.9, in 0.1 MHz step
+TT? Query tuner frequency
+returns TATxxxx or TFTxxx.x where xxxx and xxx.x are as defined above
+TAP y Set tuner to AM band, using preset y
+TFP xy Set tuner to FM band x, using preset y
+TAS y=zzzz Set preset y of tuner AM bandto zzzz KHz
+where xxxx = 540 to 1600, in 10 KHz step
+TFS xy=zzz.z Set FM band x, preset y to zzz.z MHz
+where xxxx = 87.5 to 107.9, in 0.1 MHz step
+T + Tuner seek up from current station
+T - Tuner seek down from current station
+TH x Set tuner mode
+where x=0,1,2 (stereo, hi-blend, mono)
+t1T x Set trigger 1
+where x=0,1 (disabled, enabled)
+t2T x Set trigger 2
+where x=0,1 (disabled, enabled)
+t3T x Set trigger 3
+where x=0,1 (disabled, enabled)
+FP x Set front panel display intensity
+where x =0,1,2,3 (Off, low, med, hi)
+Setup Commands
+Rename Sources
+Command Parameters Description
+SN xnnnnnn Source name
+where x = 0,1,2,3,5,6,7,8 (0=direct, 1=disc1, 2=disc2, 3= tape, 5=tv, â€¦8=aux)
+where nnnnnn = any alphanumeric characters (up to 6) except ';' which is a
+command separator
+Note that x = 4 (Tuner) can NOT be re-defined
+Audio In Format
+Command Parameters Description
+SCA nsxx.x Set source n = 0,1,2,.. 8 (0=direct, 1=disc1, 2=disc2 , 3=tape, 4=tuner, .. 8=aux)
+to Analog (RCA) connector with input gain sxx.x
+where sxx.xx= +31.5 to -95.5 dB in 0.5 dB steps
+SCD nx Set source n=1 to 3 & 5 to 8 (1=disc1, 2=disc2 , 3=tape, .. 8=aux)
+to Digital connector x = 0 to 3 (RCA, TOS1, TOS2, XLR)
+Note that x=4 (Tuner) can NOT be re-defined as a digital input
+Speaker Configuration
+Command Parameters Description
+SZF x Set Front Speaker sizes for bass manager configuration
+x = 0,1 (small, large)
+SZR x Set Rear (Surround) Speaker sizes for bass manager configuration
+x = 0,1,2 (none, small, large)
+SZC x Set Center Speaker size for bass manager configuration
+x = 0,1,2 (none, small, large)
+SZS x Set Subwoofer use for bass manager configuration
+where x = 0,1,2 (no,yes,super)
+SZX xxx Set Subwoofer crossover frequency for bass manager configuration
+where xxx= 60,70, â€¦160 (crossover frequency in Hertz)
+SEQ x Set center EQ
+where x = 0,1 (disabled,enabled)
+STV x Set TV size
+where x = 0,1,2,3,4 (18-30 in, 30-42 in, 42-54 in, 54-66 in, 66-78 in)
+SHP x Set Headphone mutes Main speakers
+where x = 0,1 (no, yes)
+Listener Position
+Command Parameters Description
+SPU x Set units for Delay manager
+where x = 0,1 (ft,m)
+SPL xx.x Set listener position from front left speaker
+where xx.x is from 0.0 to 99.0 (in 0.5 ft or 0.2 m increment)
+SPC xx.x Set listener position from center speakers
+where xx.x is from 0.0 to 99.0 (in 0.5 ft or 0.2 m increment)
+SPR xx.x Set listener position from front right speaker
+where xx.x is from 0.0 to 99.0 (in 0.5 ft or 0.2 m increment)
+SPSR xx.x Set listener position from rear (surrounds) right speaker
+where xx.x is from 0.0 to 99.0 (in 0.5 ft or 0.2 m increment)
+SPSL xx.x Set listener position from rear (surrounds) left speaker
+where xx.x is from 0.0 to 99.0 (in 0.5 ft or 0.2 m increment)
+SPs xx.x Set listener position from subwoofer
+where xx.x is from 0.0 to 99.0 (in 0.5 ft or 0.2 m increment)
+SPG xx.x Set group delay in ms
+where xx = 0,1,2,3,...84
+Speaker Level Calibration
+Command Parameters Description
+SLV sxx.xx Set speaker reference level
+where sxx.xx = MainMaxVol to -95.5 dB in 0.5 dB steps
+SLL sxx.xx Set front left speaker calibration level
+where sxx.xx = +12.0 to -12.0 dB in 0.5 dB steps
+SLC sxx.xx Set front center speaker calibration level
+where sxx.xx = +12.0 to -12.0 dB in 0.5 dB steps
+SLR sxx.xx Set front right speaker calibration level
+where sxx.xx = +12.0 to -12.0 dB in 0.5 dB steps
+SLSR sxx.xx Set rear (surround) right speaker calibration level
+where sxx.xx = +12.0 to -12.0 dB in 0.5 dB steps
+SLSL sxx.xx Set rear (surround) left speaker calibration level
+where sxx.xx = +12.0 to -12.0 dB in 0.5 dB steps
+SLs sxx.xx Set subwoofer calibration level
+where sxx.xx = +12.0 to -12.0 dB in 0.5 dB steps
+Volumes/Auto-ON Timers
+Main Auto-ON Timers
+Command Parameters Description
+SA1WD1 xx:xx Set Main wake-up weekday #1 time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+SA1WE1 xx:xx Set Main wake-up week-end #1 time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+SA1XD1 xx:xx Set Main off weekday #1 time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+SA1XE1 xx:xx Set Main off week-end #1 time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+SA1O1 x Set Main timer #1 option
+where x = 0,1,2,3 (Off, Week, Week-end, Week+Week-end)
+SA1WD2 xx:xx Set Main wake-up weekday #2 time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+SA1WE2 xx:xx Set Main wake-up week-end #2 time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+SA1XD2 xx:xx Set Main off weekday #2 time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+SA1XE2 xx:xx Set Main off week-end #2 time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+SA1O2 x Set Main timer #2 option
+where x = 0,1,2,3 (Off, Week, Week-end, Week+Week-end)
+SA1S x Set Main wake-up Source
+where x = 0..8 (0=direct, 1=disc1, 2=disc2, â€¦8=aux) (4=Tuner see below)
+SA1S40 Set Main wake-up Source to Tuner without changing station (ie. Same station as power down)
+SA1S4A y Set Main wake-up Source to Tuner at AM preset y (y=1,2â€¦6)
+SA1S4F xy Set Main wake-up Source to Tuner at FM band x (x=1,2,3) preset y (y=1,2â€¦6)
+SA1A sxx.x Set Main wake-up auto-on level
+where sxx.xx= MainMaxVol to -95.5 dB in 0.5 dB steps
+SA1V x Set Main wake-up volume option
+where x=0,1 (Auto-on, ramp-up)
+Zone2 Auto-ON Timers
+Command Parameters Description
+SA2WD1 xx:xx Set Zone2 wake-up weekday #1 time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+SA2WE1 xx:xx Set Zone2 wake-up week-end #1 time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+SA2XD1 xx:xx Set Zone2 off weekday #1 time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+SA2XE1 xx:xx Set Zone2 off week-end #1 time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+SA2O1 x Set Zone2 timer #1 option
+where x = 0,1,2,3 (Off, Week, Week-end, Week+Week-end)
+SA2WD2 xx:xx Set Zone2 wake-up weekday #2 time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+SA2WE2 xx:xx Set Zone2 wake-up week-end #2 time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+SA2XD2 xx:xx Set Zone2 off weekday #2 time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+SA2XE2 xx:xx Set Zone2 off week-end #2 time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+SA2O2 x Set Zone2 timer #2 option
+where x = 0,1,2,3 (Off, Week, Week-end, Week+Week-end)
+SA2S x Set Zone2 wake-up Source
+where x = 0..8 (0=direct, 1=disc1, 2=disc2, â€¦8=aux) (4=Tuner see below)
+SA2S40 Set Zone2 wake-up Source to Tuner without changing station (ie. Same station as power down)
+SA2S4A y Set Zone2 wake-up Source to Tuner at AM preset y (y=1,2â€¦6)
+SA2S4F xy Set Zone2 wake-up Source to Tuner at FM band x (x=1,2,3) preset y (y=1,2â€¦6)
+SA2A sxx.x Set Zone2 wake-up auto-on level
+where sxx.xx= Zone2MaxVol to -70.0 dB in 1.25 dB steps
+SA2V x Set Zone2 wake-up volume option
+where x=0,1 (Auto-on, ramp-up)
+Other Parameters
+Command Parameters Description
+STF x Set time format
+where x = 0,1 (12 hr, 24 hr)
+STC xx:xx Set current time
+where xx:xx = 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
+STD x Set current day
+where x = 1,2,3, ..7 (Sunday, Monday, Tuesday,â€¦ Saturday)
+SV1O sxx.x Set Main zone power-up value
+where sxx.xx = MainMaxVol to -95.5 dB in 0.5 dB steps
+SV1M sxx.x Set Main zone maximum level value (MainMaxVol)
+where sxx.xx = +31.5 to -95.5 dB in 0.5 dB steps
+SV2O sxx.x Set Zone2 power-up value
+where sxx.xx = +10.0 to -70.0 dB in 1.25 dB steps
+SV2M sxx.x Set Zone2 maximum level value (Zone2MaxVol)
+where sxx.xx = +10.0 to -70.0 dB in 1.25 dB steps
+SVHO sxx.x Set Headphone power-up value
+where sxx.xx = HeadphoneMaxVol to -70.0 dB in 1.25 dB steps
+SVHM sxx.x Set Headphone maximum level value
+where sxx.xx = +10.0 to -70.0 dB in 1.25 dB steps
+SVS x Set Volume speed
+where x = 0,1 (slow, fast)
+Triggers/IR/RS-232
+Command Parameters Description
+StE x Triggers (1 through 3) global enable
+where x=0,1,2 (0=disabled, 1=enabled, 2=RS-232 control)
+St1S xy Add path x and source y to conditions for trigger #1 on
+where x=0..2 (0=Main, 1=Zone2, 2= Rec) and y = 0,1,2,3â€¦9 (0=direct, 1=disc1, 2=disc2 , 3=tape, 4=tuner, .. 8=aux,9=main power on)
+St1C xy Remove path x and source y from conditions for trigger #1 on
+where x=0..2 (0=Main, 1=Zone2, 2= Rec) and y = 0,1,2,3â€¦9 (0=direct, 1=disc1, 2=disc2 , 3=tape, 4=tuner, .. 8=aux,9=main power on)
+St2S xy Add path x and source y to conditions for trigger #2 on
+where x=0..2 (0=Main, 1=Zone2, 2= Rec) and y = 0,1,2,3â€¦9 (0=direct, 1=disc1, 2=disc2 , 3=tape, 4=tuner, .. 8=aux,9=Zone2 power on)
+St2C xy Remove path x and source y from conditions for trigger #2 on
+where x=0..2 (0=Main, 1=Zone2, 2= Rec) and y = 0,1,2,3â€¦9 (0=direct, 1=disc1, 2=disc2 , 3=tape, 4=tuner, .. 8=aux,9=Zone2 power on)
+St3S xy Add path x and source y to conditions for trigger #3 on
+where x=0..2 (0=Main, 1=Zone2, 2= Rec) and y = 0,1,2,3â€¦8 (0=direct, 1=disc1, 2=disc2 , 3=tape, 4=tuner, .. 8=aux)
+St3C xy Remove path x and source y from conditions for trigger #3 on
+where x=0..2 (0=Main, 1=Zone2, 2= Rec) and y = 0,1,2,3â€¦8 (0=direct, 1=disc1, 2=disc2 , 3=tape, 4=tuner, .. 8=aux)
+SIRF x Front IR Receiver
+x=0,1 (Disabled, enabled)
+SIRR x Rear IR Receiver
+x=0,1 (Disabled, enabled)
+SSB x Set serial port baud rate
+x=0,1,2,3,â€¦7 (1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200)
+SSF x Set serial port flow control
+x=0,1 (None, RTS/CTS)
+SST x Set serial port Tx status
+x=0,1 (Disabled, enabled)
+Displays
+Command Parameters Description
+SOS x Set On-Screen
+x=0,1 (Disabled, enabled)
+SOV x Set On-Screen video mode
+x=0,1 (Composite, S-Video)
+SOT x Set display timeout
+x=1,2,3,â€¦30 seconds or x=A (Always ON)
+SOP x Set On-screen position
+x = 0,1,2 (Top, Mid, Bottom)
+SFPH xx Set Front panel Hi intensity
+xx = 0,1,2,..15
+SFPM xx Set Front panel Med intensity
+xx = 0,1,2,..15
+SFPL xx Set Front panel Lo intensity
+xx = 0,1,2,..15
+SFPW x Set Front panel wake-up
+x=0,1,2 (No, Up 1, Hi)
+Save and restore
+Command Parameters Description
+SfSU Save user settings
+SfLU Restore user settings
+SfSI Save installer settings
+SfLI Restore installer settings
+SfLF Restore factory defaults
+SfSC Save current settings. Current settings are used when applying power to the unit.
+Terminator/Separator/Unit ID
+Command Parameters Description
+0x0a - command terminator
+0x0d - dummy
+; - command separator
+? - return unit type, revision# , build date
+(e.g. "AVM 2,Version 1.00,Jun 26 2000")
+
+Notes: 1. Out-of-range "level/frequency" commands set value to max (or min) value.(e.g. master volume,
+treble, radio station frequency, speaker calibration, balanceâ€¦). No message of error is returned.
+2. Out-of -range parameters for other commands return the message "Parameter Out-of-range"
+Communication buffer (incoming) is flushed.
+3. Invalid commands return the message "Invalid Command"
+Communication buffer (incoming) is flushed.
+4. Receiving a command for the Main zone when not ON, return the message "Main Off"
+5. Receiving a command for Zone2 when not ON, return the message "Zone2 Off"
+6. Receiving a command for the Rec zone when not ON, return the message "Main Off"
+7. Receiving a "common" command when neither zones are ON, return the message "Unit Off"
+8. Positive numbers when setting a balance represent a gain on the Right channel. Negative numbers
+represent a gain on the Left channel.
+9. When sending "level" commands, rounding will automatically be done to the nearest valid value.
+10. Communication buffer is limited to 32 bytes. Truncate long command strings into several
+commands and allow time for processing (if not using flow control).
+11. Brightness control values will automatically be adjusted if lo>med>hi.
+12.Configuring a digital input using a interface (e.g. TOS1) already in-used, returns the message
+"Already in use"
+13. Time/auto-on time exceeding 24 hours (i.e illegal value) will be set to 12:00AM (or 00:00)
+14. If time format is set to 12hr, ensure that all time settings include "AM" or "PM" otherwise
+time will be set to 12:00AM (or 00:00). It time format is et to 24hr, do NOT include "AM" or "PM". 
