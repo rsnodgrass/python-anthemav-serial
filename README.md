@@ -39,6 +39,7 @@ loop.run_until_complete(main(loop))
 |  Statement D1              | ANTHEM_D1    | |
 |  AVM 30                    | ANTHEM_AVM30 | |
 |  AVM 20                    | ANTHEM_AVM20 | |
+|  MRX 500                   |              | unknown if supported |
 
 ## See Also
 
