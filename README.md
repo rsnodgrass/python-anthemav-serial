@@ -24,9 +24,7 @@ from pyanthem import get_async_amp_controller, ANTHEM_D2
 
 async def main(loop):
     amp = await get_async_amp_controller(ANTHEM_D2, '/dev/ttyUSB0', loop)
-    zone_status = await amp.zone_status(11)
-    if zone_status.power:
-        await amp.set_power(zone_status.zone, False)
+    await amp.set_power(zone, False)
 
 loop = asyncio.get_event_loop()
 loop.run_until_complete(main(loop))
