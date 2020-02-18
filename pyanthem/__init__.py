@@ -27,13 +27,13 @@ SUPPORTED_AMP_TYPES = [ ANTHEM_D2 ]
 
 # technically zone = {amp_number}{zone_num_within_amp_1-6} (e.g. 11 = amp number 1, zone 1)
 RS232_COMMANDS = {
-    ANTHEM_D2: {        
+    ANTHEM_D2: {
         'power_on':       'P{zone}P1',   # zone = 1 (main), 2, 3
         'power_off':      'P{zone}P0',
         'power_status':   'P{zone}P?',   # returns: P{zone}P{on_off}
 
         'zone_status':    'P{zone}?',    # returns P{source}V{volume}M{mute}
-        
+
         'set_volume':     'P{zone}VM{volume}', # volume (format sxx.x) = volume to sxx.xx dB where sxx.x = MainMaxVol to -95.5 dB in 0.5 dB steps
         'volume_up':      'P{zone}VMU',
         'volume_down':    'P{zone}VMD',
@@ -49,7 +49,7 @@ RS232_COMMANDS = {
 
         'trigger_on':     't{trigger}T1',
         'trigger_off':    't{trigger}T0',
-        
+
         'fm_tune':        'TFT{channel}',   # channel = xxx.x (87.5 to 107.9, in 0.1 MHz step)
         'fm_preset':      'TFP{bank}{preset}',
         'am_tune':        'TAT{channel:04}',   # channel = xxxxs (540 to 1600, in 10 KHz step)
@@ -70,7 +70,7 @@ RS232_COMMANDS = {
         'set_time_format': 'STF{on_off}', # on = 24 hour, off = 12 hour
         'set_time':  'STC{hour:02}:{min:02}', # 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
         'set_day_of_week':  'STD{dow}',  # dow = 1 (Sunday) to 7 (Saturday)
-        
+
         'set_baud_rate':    'SSB{baud_rate}', # baud_rate = 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200
         'version':  '?', # returns: unit type, revision# , build date (e.g. "AVM 2,Version 1.00,Jun 26 2000"
     }
@@ -85,22 +85,22 @@ AMP_CONFIG ={
             '2': '6CH',
             '3': 'TAPE',
             '4': 'TUNER',
-            
+
             '5': 'DVD',
             'd': 'DVD 2',
             'e': 'DVD 3',
-            'f': 'DVD 4'
+            'f': 'DVD 4',
 
             '6': 'TV',
-            'g': 'TV 2'
-            'h': 'TV 3'
-            'i': 'TV 4'
-            
+            'g': 'TV 2',
+            'h': 'TV 3',
+            'i': 'TV 4',
+
             '7': 'SAT',
-            'j': 'SAT 2'
-            
+            'j': 'SAT 2',
+
             '8': 'VCR',
-            '9': 'AUX',
+            '9': 'AUX'
         }
     }
 }
@@ -162,36 +162,36 @@ class AmpControlBase(object):
 
 def _format(amp_type: str, format_code: str, args = {}):
     eol = _get_config(amp_type, 'command_eol')
-    command = RS232_COMMANDS[amp_type].get(format_code) + eol
+    command = RS232_COMMANDS[amp_type].get(format_code) + str(eol)
     return command.format(**args).encode('ascii')
 
 def _set_power_cmd(amp_type, zone: int, power: bool) -> bytes:
-    assert zone in _get_config(amp_type, 'zones')
+#    assert zone in _get_config(amp_type, 'zones')
     if power:
         return _format(amp_type, 'power_on', args = { 'zone': zone })
     else:
         return _format(amp_type, 'power_off', args = { 'zone': zone })
 
 def _set_mute_cmd(amp_type, zone: int, mute: bool) -> bytes:
-    assert zone in _get_config(amp_type, 'zones')
+#    assert zone in _get_config(amp_type, 'zones')
     if mute:
         return _format(amp_type, 'mute_on', args = { 'zone': zone })
     else:
         return _format(amp_type, 'mute_off', args = { 'zone': zone })
     
 def _set_volume_cmd(amp_type, zone: int, volume: int) -> bytes:
-    assert zone in _get_config(amp_type, 'zones')
+#    assert zone in _get_config(amp_type, 'zones')
     volume = int(max(0, min(volume, MAX_VOLUME)))
     return _format(amp_type, 'set_volume', args = { 'zone': zone, 'volume': volume })
 
 def _set_volume_cmd(amp_type, zone: int, volume: int) -> bytes:
-    assert zone in _get_config(amp_type, 'zones')
+#    assert zone in _get_config(amp_type, 'zones')
     volume = int(max(0, min(volume, MAX_VOLUME)))
     return _format(amp_type, 'set_volume', args = { 'zone': zone, 'volume': volume })
 
 def _set_source_cmd(amp_type, zone: int, source: int) -> bytes:
-    assert zone in _get_config(amp_type, 'zones')
-    assert source in _get_config(amp_type, 'sources')
+#    assert zone in _get_config(amp_type, 'zones')
+#    assert source in _get_config(amp_type, 'sources')
     return _format(amp_type, 'set_source', args = { 'zone': zone, 'source': source })
 
 def get_amp_controller(amp_type: str, port_url):

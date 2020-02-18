@@ -1,7 +1,16 @@
 #!/usr/local/bin/python3
 
+import os
 from pyanthem import get_amp_controller, ANTHEM_D2
 
-amp = get_amp_controller(ANTHEM_D2, '/dev/tty.usbserial-A501SGSZ')
+tty = os.getenv('AMP_TTY', None)
 
-amp.mute_on(1)
+#if tty == None:
+#    print("ERROR! Must define env variable AMP_TTY (e.g. /dev/ttyUSB1")
+#    raise SystemExit
+
+amp = get_amp_controller(ANTHEM_D2, '/dev/tty.usbserial-A501SGSZ')
+print(amp)
+
+amp.set_power(1, True)
+#amp.mute_on(1)

@@ -54,3 +54,4 @@ Details on RS232 protocol:
 * [AVM 2 Serial Programming](https://www.avsforum.com/forum/26-home-theater-computers/188206-rs232-control-avm-2-help.html#post1521446)
 * [Serial commands and feedback from Anthem pre/pro](http://allonis.com/forum/viewtopic.php?t=2185)
 * http://www.remotecentral.com/cgi-bin/mboard/rc-touch/thread.cgi?2525
+* https://www.anthemav.com/downloads/Anthem%203-zone%20AVP%20serial%20commands.zip
