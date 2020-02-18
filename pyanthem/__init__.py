@@ -32,9 +32,10 @@ RS232_COMMANDS = {
         'power_off':      'P{zone}P0',
         'power_status':   'P{zone}P?',   # returns: P{zone}P{on_off}
 
-        'zone_status':    'P{zone}?',    # returns P{source}V{volume}M{mute}
+        'zone_status':    'P{zone}?',    # returns P{zone}S{source}V{volume}M{mute}
 
-        'set_volume':     'P{zone}VM{volume}', # volume (format sxx.x) = volume to sxx.xx dB where sxx.x = MainMaxVol to -95.5 dB in 0.5 dB steps
+        # set volume to sxx.xx dB where sxx.x = MainMaxVol to -95.5 dB in 0.5 dB steps
+        'set_volume':     'P{zone}VM{volume}', 
         'volume_up':      'P{zone}VMU',
         'volume_down':    'P{zone}VMD',
         'volume_status':  'P{zone}VM?',  # returns: P{zone}VM{sxx.x}
@@ -45,34 +46,52 @@ RS232_COMMANDS = {
         'mute_status':    'P{zone}M?',   # returns: P{zone}M{on_off}
 
         'source_select':  'P{zone}S{source}',
+        'multi_source_select': 'P{zone}X{video_source}{audio_source}',
         'source_status':  'P{zone}S?',  # unknown if this works
 
         'trigger_on':     't{trigger}T1',
         'trigger_off':    't{trigger}T0',
 
-        'fm_tune':        'TFT{channel}',   # channel = xxx.x (87.5 to 107.9, in 0.1 MHz step)
+        'fm_tune':        'TFT{channel}',      # channel = xxx.x (87.5 to 107.9, in 0.1 MHz step)
         'fm_preset':      'TFP{bank}{preset}',
         'am_tune':        'TAT{channel:04}',   # channel = xxxxs (540 to 1600, in 10 KHz step)
         'am_preset':      'TAP{bank}{preset}',
-        'tuner_frequeny': 'TT?',            # returns TATxxxx or TFTxxx.x where
+        'tuner_frequeny': 'TT?',               # returns TATxxxx or TFTxxx.x where
         'tuner_up':       'T+',
         'tuner_down':     'T-',
 
-        'sleep_timer':    'P1Z{sleep_mode}', # 0 = off; 1 = 30 min; 2 = 60 min; 3 = 90 min
+        # Dolby Digital mode dynamic range; 0 = normal; 1 = reduced; 2 = late night
+        'set_dynamic_range': 'P{zone}C{range}',
 
-        'headphone_status': 'H?', # returns HS{source}V{volume}M{mute}
-        'headphone_volume_up': 'HVU',
+        'display_message':   'P{zone}x{line}{message}', # line = 1 or 2; 
+
+        'source_seek_up':    'P{zone}SS+',
+        'source_seek_down':  'P{zone}SS-',
+
+        'sleep_timer':       'P1Z{sleep_mode}', # 0 = off; 1 = 30 min; 2 = 60 min; 3 = 90 min
+
+        'headphone_status':      'H?', # returns HS{source}V{volume}M{mute}
+        'headphone_volume':      'HV{db}', 
+        'headphone_volume_up':   'HVU',
         'headphone_volume_down': 'HVD',
-        'headphone_mute_on': 'HM1',
-        'headphone_mute_off': 'HM0',
+        'headphone_mute_on':     'HM1',
+        'headphone_mute_off':    'HM0',
         'headphone_mute_toggle': 'HMT',
 
         'set_time_format': 'STF{on_off}', # on = 24 hour, off = 12 hour
-        'set_time':  'STC{hour:02}:{min:02}', # 00:00 to 23:59 (24hr format) or 12:00AM to 11:59PM (12hr format)
-        'set_day_of_week':  'STD{dow}',  # dow = 1 (Sunday) to 7 (Saturday)
+        'set_time':        'STC{hour:02}:{min:02}', # 00:00 to 23:59 (24hr format); 12:00AM to 11:59PM (12hr format)
+        'set_day_of_week': 'STD{dow}',  # dow = 1 (Sunday) to 7 (Saturday)
 
-        'set_baud_rate':    'SSB{baud_rate}', # baud_rate = 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200
-        'version':  '?', # returns: unit type, revision# , build date (e.g. "AVM 2,Version 1.00,Jun 26 2000"
+        # baud_rate = 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200
+        'set_baud_rate':   'SSB{baud_rate}',
+
+        # returns: unit type, revision# , build date (e.g. "AVM 2,Version 1.00,Jun 26 2000"
+        'version':         '?',
+        
+        'rename_source':   'SN{source}{name}', # 6 character name
+        
+        'lock_front_panel':   'FPL1',
+        'unlock_front_panel': 'FPL0',
     }
 }
 
@@ -129,6 +148,12 @@ class AmpControlBase(object):
     AmpliferControlBase amplifier interface
     """
 
+    def run_command(self, command: str, args = {}):
+        """
+        Execute command with args
+        """
+        raise NotImplemented()
+
     def set_power(self, zone: int, power: bool):
         """
         Turn zone on or off
@@ -179,7 +204,7 @@ def _set_mute_cmd(amp_type, zone: int, mute: bool) -> bytes:
         return _format(amp_type, 'mute_on', args = { 'zone': zone })
     else:
         return _format(amp_type, 'mute_off', args = { 'zone': zone })
-    
+
 def _set_volume_cmd(amp_type, zone: int, volume: int) -> bytes:
 #    assert zone in _get_config(amp_type, 'zones')
     volume = int(max(0, min(volume, MAX_VOLUME)))
@@ -260,6 +285,11 @@ def get_amp_controller(amp_type: str, port_url):
             return ret.decode('ascii')
 
         @synchronized
+        def run_command(self, command: str, args = {}):
+            cmd = _format(self._amp_type, command, args)
+            return self._process_request(cmd)
+
+        @synchronized
         def set_power(self, zone: int, power: bool):
             self._process_request(_set_power_cmd(self._amp_type, zone, power))
 
@@ -308,6 +338,11 @@ def get_async_amp_controller(amp_type, port_url, loop):
             self._amp_type = amp_type
             self._protocol = protocol
 
+        @locked_coro
+        @asyncio.coroutine
+        def run_command(self, command: str, args = {}):
+            yield from self._protocol.send( _format(self._amp_type, command, args) )
+            
         @locked_coro
         @asyncio.coroutine
         def set_power(self, zone: int, power: bool):
