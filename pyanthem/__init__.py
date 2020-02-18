@@ -78,7 +78,8 @@ RS232_COMMANDS = {
 
 AMP_CONFIG ={
     ANTHEM_D2: {
-        'protocol_eol':    b'\x0a',  # x0A or Carriage Return at the end of the string
+        'command_eol':    "\n",  # x0A (Carriage Return at the end of the string
+        'multi-seperator': ';',
         'sources': {
             '0': 'CD',
             '1': 'STEREO',
@@ -237,7 +238,7 @@ def get_amp_controller(amp_type: str, port_url):
             self._port.write(request)
             self._port.flush()
 
-            eol = _get_config(self._amp_type, 'protocol_eol')
+            eol = _get_config(self._amp_type, 'command_eol')
             len_eol = len(eol)
 
             # receive
