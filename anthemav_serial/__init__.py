@@ -14,41 +14,31 @@ from threading import RLock
 
 LOG = logging.getLogger(__name__)
 
-MAX_VOLUME = 100
-
-# currently the D1 and AVM models support same protocols as D2
-# however, we may change the this as there is more complex
-# configuration needed in the future
-ANTHEM_D2 = 'anthem_gen1'
-ANTHEM_D1 = 'anthem_gen1'
-ANTHEM_AVM50 = 'anthem_gen1'
-ANTHEM_AVM20 = 'anthem_gen1'
-ANTHEM_AVM20 = 'anthem_gen1'
-ANTHEM_MRX = 'anthem_gen1' # MRX 300, 500, 700
-ANTHEM_MRX1 = 'anthem_gen2' # MRX 310, 310, 710
-ANTHEM_MRX2 = 'anthem_gen2' # MRX 320, 320, 720
-
-ANTHEM_GEN1 = 'anthem_gen1'
-ANTHEM_GEN2 = 'anthem_gen1'
-SUPPORTED_AMP_TYPES = [ ANTHEM_GEN1 ]
-
-RS232_GEN1 = 'anthem_gen1'
-RS232_GEN2 = 'anthem_gen1'
+ANTHEM_D2    = 'd2'    # D2, D2v, D2v 3D
+ANTHEM_D1    = 'd1'
+ANTHEM_AVM20 = 'avm20'
+ANTHEM_AVM30 = 'avm30'
+ANTHEM_AVM50 = 'avm50'
+ANTHEM_AVM60 = 'avm50'
+ANTHEM_MRX   = 'mrx'   # MRX 300, 500, 700
+ANTHEM_MRX1  = 'mrx1'  # MRX 310, 510, 710
+ANTHEM_MRX2  = 'mrx2'  # MRX 320, 520, 720
 
 ANTHEM_RS232_GEN1 = 'anthem_gen1'
-ANTHEM_RS232_GEN2 = 'anthem_gen1'
+ANTHEM_RS232_GEN2 = 'anthem_gen2'
 
-MODEL_TO_RS232_GEN = {
+SERIES_TO_RS232_PROTOCOL = {
     ANTHEM_D2:    ANTHEM_RS232_GEN1,
     ANTHEM_D1:    ANTHEM_RS232_GEN1,
     ANTHEM_AVM50: ANTHEM_RS232_GEN1,
     ANTHEM_AVM30: ANTHEM_RS232_GEN1,
     ANTHEM_AVM20: ANTHEM_RS232_GEN1,
-    ANTHEM_MX:    ANTHEM_RS232_GEN1,
-    ANTHEM_MX1:   ANTHEM_RS232_GEN2,
-    ANTHEM_MX2:   ANTHEM_RS232_GEN2,
+    ANTHEM_AVM60: ANTHEM_RS232_GEN2,
+    ANTHEM_MRX:   ANTHEM_RS232_GEN1,
+    ANTHEM_MRX1:  ANTHEM_RS232_GEN2,
+    ANTHEM_MRX2:  ANTHEM_RS232_GEN2,
 }
-ANTHEM_MODELS = MODEL_TO_RS232_GEN.keys()
+SUPPORTED_ANTHEM_SERIES = SERIES_TO_RS232_PROTOCOL.keys()
 
 # FIXME: ideally all the config would move to YAML or JSON (RS232 commands, models, etc) which
 # would also allow other Anthem non-Python clients to share this info.
@@ -180,6 +170,8 @@ RS232_COMMANDS = {
         'unlock_front_panel': 'FPL0',
     }
 }
+
+MAX_VOLUME = 100   # FIXME: range should be configurated by amp models
 
 AMP_CONFIG ={
     ANTHEM_GEN1: {
@@ -313,7 +305,7 @@ def _set_source_cmd(amp_type, zone: int, source: int) -> bytes:
 #    assert source in _get_config(amp_type, 'sources')
     return _format(amp_type, 'set_source', args = { 'zone': zone, 'source': source })
 
-def get_amp_controller(amp_type: str, port_url):
+def get_amp_controller(amp_series: str, port_url):
     """
     Return synchronous version of amplifier control interface
     :param port_url: serial port, i.e. '/dev/ttyUSB0'
@@ -321,10 +313,12 @@ def get_amp_controller(amp_type: str, port_url):
     """
 
     # sanity check the provided amplifier type
-    if amp_type not in SUPPORTED_AMP_TYPES:
-        LOG.error("Unsupported amplifier type '%s'", amp_type)
+    if amp_series not in SUPPORTED_ANTHEM_SERIES:
+        LOG.error("Unsupported amplifier series '%s'", amp_series)
         return None
 
+    amp_type = SERIES_TO_RS232_PROTOCOL[amp_series]
+    
     lock = RLock()
 
     def synchronized(func):
@@ -403,7 +397,7 @@ def get_amp_controller(amp_type: str, port_url):
 
 
 @asyncio.coroutine
-def get_async_amp_controller(amp_type, port_url, loop):
+def get_async_amp_controller(amp_series, port_url, loop):
     """
     Return asynchronous version of amplifier control interface
     :param port_url: serial port, i.e. '/dev/ttyUSB0'
@@ -412,10 +406,12 @@ def get_async_amp_controller(amp_type, port_url, loop):
     from serial_asyncio import create_serial_connection
 
     # sanity check the provided amplifier type
-    if amp_type not in SUPPORTED_AMP_TYPES:
-        LOG.error("Unsupported amplifier type '%s'", amp_type)
+    if amp_series not in SUPPORTED_ANTHEM_SERIES:
+        LOG.error("Unsupported amplifier series '%s'", amp_series)
         return None
 
+    amp_type = SERIES_TO_RS232_PROTOCOL[amp_series]
+    
     lock = asyncio.Lock()
 
     def locked_coro(coro):
