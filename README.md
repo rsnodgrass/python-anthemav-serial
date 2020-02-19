@@ -48,6 +48,7 @@ loop.run_until_complete(main(loop))
 ## See Also
 
 * [Anthem D2/D2v/AVM50/AVM50v/ARC1 tweaking guide (AVS Forum)](https://www.avsforum.com/forum/90-receivers-amps-processors/678260-anthem-d2-d2v-avm50-avm50v-arc1-tweaking-guide-1510.html)
+* [IP-based Python interface for IP-based Anthem receivers](https://github.com/nugget/python-anthemav)
 
 Details on RS232 protocol:
 
