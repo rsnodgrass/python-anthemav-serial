@@ -32,16 +32,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 """
 
-setup(name='pyanthem',
+setup(name='anthemav_serial',
       version=VERSION,
-      description='Python RS232 API for Anthem Statement D2 Pre-Amplifiers',
-      url='https://github.com/rsnodgrass/pyanthem',
-      download_url='https://github.com/rsndograss/pyanthem/archive/{}.tar.gz'.format(VERSION),
+      description='Python RS232 API for Anthem A/V Receivers',
+      url='https://github.com/rsnodgrass/python-anthemav-serial',
+      download_url='https://github.com/rsnodgrass/python-anthemav-serial/archive/{}.tar.gz'.format(VERSION),
       author='Ryan Snodgrass',
       author_email='rsnodgrass@gmail.com',
       license='Apache 2.0',
       install_requires=['pyserial>=3.4','pyserial-asyncio>=0.4'],
-      packages=['pyanthem'],
+      packages=['anthemav_serial'],
       classifiers=['Development Status :: 4 - Beta',
                    'License :: OSI Approved :: MIT License',
                    'Programming Language :: Python :: 3' ],

@@ -1,7 +1,7 @@
 #!/usr/local/bin/python3
 
 import os
-from pyanthem import get_amp_controller, ANTHEM_D2
+from anthemav_serial import get_amp_controller, ANTHEM_D2
 
 tty = os.getenv('AMP_TTY', None)
 

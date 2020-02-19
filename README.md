@@ -16,7 +16,7 @@ Library for controlling Anthem pre-amplifiers (e.g. Statement D2) via RS232 seri
 ## Usage
 
 ```python
-from pyanthem import get_amp_controller, ANTHEM_D2
+from anthemav_serial import get_amp_controller, ANTHEM_D2
 
 type_code = ANTHEM_D2
 amp = get_amp_controller(type_code, '/dev/ttyUSB0')
@@ -31,7 +31,7 @@ With the `asyncio` flavor, all methods of the controller objects are coroutines:
 
 ```python
 import asyncio
-from pyanthem import get_async_amp_controller, ANTHEM_D2
+from anthemav_serial import get_async_amp_controller, ANTHEM_D2
 
 async def main(loop):
     amp = await get_async_amp_controller(ANTHEM_D2, '/dev/ttyUSB0', loop)
