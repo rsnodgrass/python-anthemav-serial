@@ -23,6 +23,10 @@ ANTHEM_AVM60 = 'avm50'
 ANTHEM_MRX   = 'mrx'   # MRX 300, 500, 700
 ANTHEM_MRX1  = 'mrx1'  # MRX 310, 510, 710
 ANTHEM_MRX2  = 'mrx2'  # MRX 320, 520, 720
+ANTHEM_STR   =' str'
+
+# FIXME: ideally all the config would move to YAML or JSON (RS232 commands, models, etc) which
+# would also allow other Anthem non-Python clients to share this info.
 
 ANTHEM_RS232_GEN1 = 'anthem_gen1'
 ANTHEM_RS232_GEN2 = 'anthem_gen2'
@@ -37,13 +41,10 @@ SERIES_TO_RS232_PROTOCOL = {
     ANTHEM_MRX:   ANTHEM_RS232_GEN1,
     ANTHEM_MRX1:  ANTHEM_RS232_GEN2,
     ANTHEM_MRX2:  ANTHEM_RS232_GEN2,
+    ANTHEM_STR:   ANTHEM_RS232_GEN2
 }
 SUPPORTED_ANTHEM_SERIES = SERIES_TO_RS232_PROTOCOL.keys()
 
-# FIXME: ideally all the config would move to YAML or JSON (RS232 commands, models, etc) which
-# would also allow other Anthem non-Python clients to share this info.
-
-# technically zone = {amp_number}{zone_num_within_amp_1-6} (e.g. 11 = amp number 1, zone 1)
 RS232_COMMANDS = {
     ANTHEM_GEN1: {
         'power_on':       'P{zone}P1',   # zone = 1 (main), 2, 3
@@ -172,6 +173,7 @@ RS232_COMMANDS = {
 }
 
 MAX_VOLUME = 100   # FIXME: range should be configurated by amp models
+TIMEOUT = 2  # serial operation timeout (seconds)
 
 AMP_CONFIG ={
     ANTHEM_GEN1: {
@@ -209,8 +211,6 @@ AMP_CONFIG ={
         'default_baud_rate': 115200
     }
 }
-
-TIMEOUT = 2  # serial operation timeout (seconds)
 
 SERIAL_INIT_ARGS = {
     'baudrate':      19200,
