@@ -19,15 +19,43 @@ MAX_VOLUME = 100
 # currently the D1 and AVM models support same protocols as D2
 # however, we may change the this as there is more complex
 # configuration needed in the future
-ANTHEM_D2 = 'anthem-d2'
-ANTHEM_D1 = 'anthem-d2'
-ANTHEM_AVM20 = 'anthem-d2'
-ANTHEM_AVM30 = 'anthem-d2'
-SUPPORTED_AMP_TYPES = [ ANTHEM_D2 ]
+ANTHEM_D2 = 'anthem_gen1'
+ANTHEM_D1 = 'anthem_gen1'
+ANTHEM_AVM50 = 'anthem_gen1'
+ANTHEM_AVM20 = 'anthem_gen1'
+ANTHEM_AVM20 = 'anthem_gen1'
+ANTHEM_MRX = 'anthem_gen1' # MRX 300, 500, 700
+ANTHEM_MRX1 = 'anthem_gen2' # MRX 310, 310, 710
+ANTHEM_MRX2 = 'anthem_gen2' # MRX 320, 320, 720
+
+ANTHEM_GEN1 = 'anthem_gen1'
+ANTHEM_GEN2 = 'anthem_gen1'
+SUPPORTED_AMP_TYPES = [ ANTHEM_GEN1 ]
+
+RS232_GEN1 = 'anthem_gen1'
+RS232_GEN2 = 'anthem_gen1'
+
+ANTHEM_RS232_GEN1 = 'anthem_gen1'
+ANTHEM_RS232_GEN2 = 'anthem_gen1'
+
+MODEL_TO_RS232_GEN = {
+    ANTHEM_D2:    ANTHEM_RS232_GEN1,
+    ANTHEM_D1:    ANTHEM_RS232_GEN1,
+    ANTHEM_AVM50: ANTHEM_RS232_GEN1,
+    ANTHEM_AVM30: ANTHEM_RS232_GEN1,
+    ANTHEM_AVM20: ANTHEM_RS232_GEN1,
+    ANTHEM_MX:    ANTHEM_RS232_GEN1,
+    ANTHEM_MX1:   ANTHEM_RS232_GEN2,
+    ANTHEM_MX2:   ANTHEM_RS232_GEN2,
+}
+ANTHEM_MODELS = MODEL_TO_RS232_GEN.keys()
+
+# FIXME: ideally all the config would move to YAML or JSON (RS232 commands, models, etc) which
+# would also allow other Anthem non-Python clients to share this info.
 
 # technically zone = {amp_number}{zone_num_within_amp_1-6} (e.g. 11 = amp number 1, zone 1)
 RS232_COMMANDS = {
-    ANTHEM_D2: {
+    ANTHEM_GEN1: {
         'power_on':       'P{zone}P1',   # zone = 1 (main), 2, 3
         'power_off':      'P{zone}P0',
         'power_status':   'P{zone}P?',   # returns: P{zone}P{on_off}
@@ -59,11 +87,13 @@ RS232_COMMANDS = {
         'tuner_frequeny': 'TT?',               # returns TATxxxx or TFTxxx.x where
         'tuner_up':       'T+',
         'tuner_down':     'T-',
+        'seek_up':        'T+',
+        'seek_down':      'T-',
 
         # Dolby Digital mode dynamic range; 0 = normal; 1 = reduced; 2 = late night
         'set_dynamic_range': 'P{zone}C{range}',
 
-        'display_message':   'P{zone}x{line}{message}', # line = 1 or 2; 
+        'display_message':   'P{zone}x{row}{message}', # row = 1 or 2
 
         'source_seek_up':    'P{zone}SS+',
         'source_seek_down':  'P{zone}SS-',
@@ -85,9 +115,65 @@ RS232_COMMANDS = {
         # baud_rate = 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200
         'set_baud_rate':   'SSB{baud_rate}',
 
-        # returns: unit type, revision# , build date (e.g. "AVM 2,Version 1.00,Jun 26 2000"
-        'version':         '?',
+        # returns: unit type, revision# , build date (AVM 2,Version 1.00,Jun 26 2000)
+        'query_version':   '?',
         
+        'rename_source':   'SN{source}{name}', # 6 character name
+        
+        'lock_front_panel':   'FPL1',
+        'unlock_front_panel': 'FPL0',
+    }
+
+    ANTHEM_GEN2: {
+        'power_on':       'Z{zone}POW1', # zone = 1 (main), 2, 3
+        'power_off':      'Z{zone}POW0',
+        'power_status':   'Z{zone}POW?',
+
+        'zone_status':    'P{zone}?',
+
+        # set volume to sxx.xx dB where sxx.x = MainMaxVol to -95.5 dB in 0.5 dB steps
+        'set_volume':     'Z{zone}VOL{volume}', 
+        'volume_up':      'Z{zone}VUP',
+        'volume_down':    'Z{zone}VDN',
+        'volume_status':  'Z{zone}VOL?',
+
+        'mute_on':        'Z{zone}MUT1',
+        'mute_off':       'Z{zone}MUT0',
+        'mute_toggle':    'Z{zone}MUTt',
+        'mute_status':    'Z{zone}MUT?',
+
+        'arc_on':         'Z1ARC1',
+        'arc_off':        'Z1ARC0'
+
+        'source_select':  'Z{zone}INP{source}',
+        'source_status':  'Z{zone}INP?',
+
+        'trigger_on':     'R{trigger}SET1',
+        'trigger_off':    'R{trigger}SET0',
+
+        'fm_tune':        'T1FMS{channel}',      # channel = xxx.x (87.5 to 107.9, in 0.1 MHz step)
+        'fm_status':      'T1FMS?',
+        'fm_preset':      'T1PSL{preset}',
+        'tuner_up':       'T1TUP',
+        'tuner_down':     'T1TDN',
+        'seek_up':        'T1KUP',
+        'seek_down':      'T1KDN',
+        'preset_up':      'T1PUP',
+        'preset_down':    'T1PDN',
+
+        'display_message':   'Z1MSG{row}{message}', # row = 1 or 2
+
+        'source_seek_up':    'P{zone}SS+',
+        'source_seek_down':  'P{zone}SS-',
+
+        # baud_rate = 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200
+        'set_baud_rate':   'SSB{baud_rate}',
+
+        # returns: unit type, revision# , build date (IDQMRX 1120 US 0.2.3Oct 23 2015)"
+        'query_version':   'IDQ?',
+        'query_model':     'IDM?',
+        'query_id':        'IDN?',
+
         'rename_source':   'SN{source}{name}', # 6 character name
         
         'lock_front_panel':   'FPL1',
@@ -96,9 +182,10 @@ RS232_COMMANDS = {
 }
 
 AMP_CONFIG ={
-    ANTHEM_D2: {
+    ANTHEM_GEN1: {
         'command_eol':    "\n",  # x0A (Carriage Return at the end of the string
         'multi-seperator': ';',
+        'default_baud_rate': 9600,
         'sources': {
             '0': 'CD',
             '1': 'STEREO',
@@ -122,6 +209,12 @@ AMP_CONFIG ={
             '8': 'VCR',
             '9': 'AUX'
         }
+    },
+    
+    ANTHEM_GEN2: {
+        'command_eol':    "\n",  # x0A (Carriage Return at the end of the string
+        'multi-seperator': ';',
+        'default_baud_rate': 115200
     }
 }
 

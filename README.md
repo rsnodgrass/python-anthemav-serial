@@ -4,9 +4,9 @@ Library for controlling Anthem receivers and pre-amplifiers (e.g. Statement D2) 
 
 #### Supported Anthem Models
 
-This currently only supports Anthem models which communicate using Anthen's original RS232 serial v1 interface. For later models (while the v2 serial interface is still unsupported), the [IP-based 'python-anthemav' library for communicating](https://github.com/nugget/python-anthemav) can be used.
+This currently only supports Anthem models which communicate using Anthen's original RS232 serial Gen1 interface. For later models (while the Gen2 serial interface is still unsupported), the [IP-based 'python-anthemav' library for communicating](https://github.com/nugget/python-anthemav) can be used.
 
-|  Model(s)                        | Type Code    | RS232 v1 | RS232 v2 | IP | Notes |
+|  Model(s)                        | Type Code    | RS232 Gen1 | RS232 Gen2 | IP | Notes |
 |  ------------------------------- | ------------ | -------- | -------- | -- | ----- |
 |  Statement D2, D2v, D2v 3D       | ANTHEM_D2    | X |   |   |
 |  Statement D1                    | ANTHEM_D1    | X |   |   |
