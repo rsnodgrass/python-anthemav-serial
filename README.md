@@ -4,17 +4,18 @@ Library for controlling Anthem receivers and pre-amplifiers (e.g. Statement D2) 
 
 #### Supported Anthem Models
 
-Only those that support RS232 below, otherwise use the [IP-based 'python-anthemav' library for communicating](https://github.com/nugget/python-anthemav):
+This currently only supports Anthem models which communicate using Anthen's original RS232 serial v1 interface. For later models (while the v2 serial interface is still unsupported), the [IP-based 'python-anthemav' library for communicating](https://github.com/nugget/python-anthemav) can be used.
 
-|  Model(s)                   | Type Code    | RS232 | IP | Notes |
-|  -------------------------- | ------------ | ----- | -- | ----- |
-|  Statement D2, D2v, D2v 3D  | ANTHEM_D2    | X |   |
-|  Statement D1               | ANTHEM_D1    | X |   |
-|  AVM 60                     |              | X | X | 
-|  AVM 20, AVM 30, AVM 50     |              | X |   | unknown
-|  MRX 500                    |              | X |   | unknown if supported
-|  MRX 310, MRX 510, MRX 710  |              |   | X |
-|  MRX 520, MRX 720, MRX 1120 |              |   | X |
+|  Model(s)                        | Type Code    | RS232 v1 | RS232 v2 | IP | Notes |
+|  ------------------------------- | ------------ | -------- | -------- | -- | ----- |
+|  Statement D2, D2v, D2v 3D       | ANTHEM_D2    | X |   |   |
+|  Statement D1                    | ANTHEM_D1    | X |   |   |
+|  AVM 20, AVM 30, AVM 50, AVM 50v | ANTHEM_AVM   | X |   |   | unknown
+|  MRX 300, MRX 500, MRX 700       |              | X |   |   | unknown if supported
+|  AVM 60                          |              | X | X | X | 
+|  MRX 310, MRX 510, MRX 710       |              |   | X | X |
+|  MRX 520, MRX 720, MRX 1120      |              |   | X | X |
+|  STR amplifiers                  |              |   | X | X |
 
 ## Usage
 
