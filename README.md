@@ -2,18 +2,19 @@
 
 Library for controlling Anthem receivers and pre-amplifiers (e.g. Statement D2) via RS232 serial connections.
 
-#### Supported Anthem Pre-Amps
+#### Supported Anthem Models
 
-|  Model(s)                  | Type Code    | Notes |
-|  ------------------------- | ------------ | ----- |
-|  Statement D2, D2v, D2v 3D | ANTHEM_D2    | |
-|  Statement D1              | ANTHEM_D1    | |
-|  AVM 50 / AVM 60           |              | unknown |
-|  AVM 30                    | ANTHEM_AVM30 | |
-|  AVM 20                    | ANTHEM_AVM20 | |
-|  MRX 500                   |              | unknown if supported |
+Only those that support RS232 below, otherwise use the [IP-based 'python-anthemav' library for communicating](https://github.com/nugget/python-anthemav):
 
-For other devices, see the [Python interface for IP-based Anthem receivers](https://github.com/nugget/python-anthemav].
+|  Model(s)                   | Type Code    | RS232 | IP | Notes |
+|  -------------------------- | ------------ | ----- | -- | ----- |
+|  Statement D2, D2v, D2v 3D  | ANTHEM_D2    | X |   |
+|  Statement D1               | ANTHEM_D1    | X |   |
+|  AVM 60                     |              | X | X | 
+|  AVM 20, AVM 30, AVM 50     |              | X |   | unknown
+|  MRX 500                    |              | X |   | unknown if supported
+|  MRX 310, MRX 510, MRX 710  |              |   | X |
+|  MRX 520, MRX 720, MRX 1120 |              |   | X |
 
 ## Usage
 
