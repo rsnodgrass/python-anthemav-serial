@@ -1,6 +1,6 @@
-# Python RS232 API for Anthem Pre-Amplifiers
+# Python RS232 API for Anthem Receivers and Pre-Amplifiers
 
-Library for controlling Anthem pre-amplifiers (e.g. Statement D2) via RS232 serial connections.
+Library for controlling Anthem receivers and pre-amplifiers (e.g. Statement D2) via RS232 serial connections.
 
 #### Supported Anthem Pre-Amps
 
@@ -12,6 +12,8 @@ Library for controlling Anthem pre-amplifiers (e.g. Statement D2) via RS232 seri
 |  AVM 30                    | ANTHEM_AVM30 | |
 |  AVM 20                    | ANTHEM_AVM20 | |
 |  MRX 500                   |              | unknown if supported |
+
+For other devices, see the [Python interface for IP-based Anthem receivers](https://github.com/nugget/python-anthemav].
 
 ## Usage
 
@@ -48,7 +50,7 @@ loop.run_until_complete(main(loop))
 ## See Also
 
 * [Anthem D2/D2v/AVM50/AVM50v/ARC1 tweaking guide (AVS Forum)](https://www.avsforum.com/forum/90-receivers-amps-processors/678260-anthem-d2-d2v-avm50-avm50v-arc1-tweaking-guide-1510.html)
-* [IP-based Python interface for IP-based Anthem receivers](https://github.com/nugget/python-anthemav)
+* [Python interface for IP-based Anthem receivers](https://github.com/nugget/python-anthemav)
 
 Details on RS232 protocol:
 
