@@ -173,7 +173,7 @@ RS232_COMMANDS = {
 }
 
 MAX_VOLUME = 100   # FIXME: range should be configurated by amp models
-TIMEOUT = 2  # serial operation timeout (seconds)
+TIMEOUT = 1        # serial operation timeout (seconds)
 
 AMP_CONFIG ={
     ANTHEM_GEN1: {
