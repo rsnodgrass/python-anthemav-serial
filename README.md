@@ -6,26 +6,29 @@ Library for controlling Anthem receivers and pre-amplifiers (e.g. Statement D2) 
 
 This currently only supports Anthem models which communicate using Anthen's original RS232 serial Gen1 interface. For later models (while the Gen2 serial interface is still unsupported), the [IP-based 'python-anthemav' library for communicating](https://github.com/nugget/python-anthemav) can be used.
 
-|  Model(s)                        | Series       | RS232 Gen1 | RS232 Gen2 | IP |
-|  ------------------------------- | ------------ |:----------:|:----------:|:--:|
-|  Statement D2, D2v, D2v 3D       | ANTHEM_D2    | X |   |   |
-|  Statement D1                    | ANTHEM_D1    | X |   |   |
-|  AVM 20                          | ANTHEM_AVM20 | X |   |   |
-|  AVM 30                          | ANTHEM_AVM30 | X |   |   |
-|  AVM 50, AVM 50v                 | ANTHEM_AVM50 | X |   |   |
-|  MRX 300, MRX 500, MRX 700       | ANTHEM_MRX   | X |   |   |
-|  AVM 60                          | ANTHEM_AVM60 |  | X | X | 
-|  MRX 310, MRX 510, MRX 710       | ANTHEM_MRX1  |   | X | X |
-|  MRX 520, MRX 720, MRX 1120      | ANTHEM_MRX2  |   | X | X |
-|  STR amplifiers                  | ANTHEM_STR   |   | X | X |
+|  Model(s)                        | Series | Series Const | RS232 Gen1 | RS232 Gen2 | IP |
+|  ------------------------------- | ------ | ------------ |:----------:|:----------:|:--:|
+|  Statement D2, D2v, D2v 3D       | d2     | ANTHEM_D2    | X |   |   |
+|  Statement D1                    | d1     | ANTHEM_D1    | X |   |   |
+|  AVM 20                          | avm20  | ANTHEM_AVM20 | X |   |   |
+|  AVM 30                          | avm30  | ANTHEM_AVM30 | X |   |   |
+|  AVM 50, AVM 50v                 | avm50  | ANTHEM_AVM50 | X |   |   |
+|  MRX 300, MRX 500, MRX 700       | mrx    | ANTHEM_MRX   | X |   |   |
+|  AVM 60                          | avm60  | ANTHEM_AVM60 |  | X | X | 
+|  MRX 310, MRX 510, MRX 710       | mrx1   | ANTHEM_MRX1  |   | X | X |
+|  MRX 520, MRX 720, MRX 1120      | mrx2   | ANTHEM_MRX2  |   | X | X |
+|  STR amplifiers                  | str    | ANTHEM_STR   |   | X | X |
+
+The list of series constants are enumerated in the `SUPPORTED_ANTHEM_SERIES` variable.
 
 ## Usage
 
 ```python
 from anthemav_serial import get_amp_controller, ANTHEM_D2
 
-type_code = ANTHEM_D2
-amp = get_amp_controller(type_code, '/dev/ttyUSB0')
+amp_series = ANTHEM_D2
+serial_port = '/dev/ttyUSB0'
+amp = get_amp_controller(amp_series, serial_port)
 amp.mute_on(1)
 ```
 

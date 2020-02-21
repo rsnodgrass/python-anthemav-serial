@@ -31,22 +31,43 @@ ANTHEM_STR   =' str'
 ANTHEM_RS232_GEN1 = 'anthem_gen1'
 ANTHEM_RS232_GEN2 = 'anthem_gen2'
 
-SERIES_TO_RS232_PROTOCOL = {
-    ANTHEM_D2:    ANTHEM_RS232_GEN1,
-    ANTHEM_D1:    ANTHEM_RS232_GEN1,
-    ANTHEM_AVM50: ANTHEM_RS232_GEN1,
-    ANTHEM_AVM30: ANTHEM_RS232_GEN1,
-    ANTHEM_AVM20: ANTHEM_RS232_GEN1,
-    ANTHEM_AVM60: ANTHEM_RS232_GEN2,
-    ANTHEM_MRX:   ANTHEM_RS232_GEN1,
-    ANTHEM_MRX1:  ANTHEM_RS232_GEN2,
-    ANTHEM_MRX2:  ANTHEM_RS232_GEN2,
-    ANTHEM_STR:   ANTHEM_RS232_GEN2
+ANTHEM_SERIES_CONFIG = {
+    ANTHEM_D2:    
+        { 'protocol': ANTHEM_RS232_GEN1,
+          'name': "Anthem D2" },
+    ANTHEM_D1:    
+        { 'protocol': ANTHEM_RS232_GEN1,
+          'name': "Anthem D1" },
+    ANTHEM_AVM50: 
+        { 'protocol': ANTHEM_RS232_GEN1,
+          'name': "Anthem AVM50" },
+    ANTHEM_AVM30: 
+        { 'protocol': ANTHEM_RS232_GEN1,
+          'name': "Anthem AVM30" },
+    ANTHEM_AVM20: 
+        { 'protocol': ANTHEM_RS232_GEN1,
+          'name': "Anthem AVM20" },
+    ANTHEM_AVM60: 
+        { 'protocol': ANTHEM_RS232_GEN2,
+          'name': "Anthem AVM60" },
+    ANTHEM_MRX:   
+        { 'protocol': ANTHEM_RS232_GEN1,
+          'name': "Anthem MRX" },
+    ANTHEM_MRX1:  
+        { 'protocol': ANTHEM_RS232_GEN2,
+          'name': "Anthem MRX1" },
+    ANTHEM_MRX2:  
+        { 'protocol': ANTHEM_RS232_GEN2,
+          'name': "Anthem MRX2" },
+    ANTHEM_STR:   
+        { 'protocol': ANTHEM_RS232_GEN2,
+          'name': "Anthem STR" }
 }
-SUPPORTED_ANTHEM_SERIES = SERIES_TO_RS232_PROTOCOL.keys()
+SUPPORTED_ANTHEM_SERIES = ANTHEM_SERIES_CONFIG.keys()
+
 
 RS232_COMMANDS = {
-    ANTHEM_GEN1: {
+    ANTHEM_RS232_GEN1: {
         'power_on':       'P{zone}P1',   # zone = 1 (main), 2, 3
         'power_off':      'P{zone}P0',
         'power_status':   'P{zone}P?',   # returns: P{zone}P{on_off}
@@ -113,9 +134,9 @@ RS232_COMMANDS = {
         
         'lock_front_panel':   'FPL1',
         'unlock_front_panel': 'FPL0',
-    }
+    },
 
-    ANTHEM_GEN2: {
+    ANTHEM_RS232_GEN2: {
         'power_on':       'Z{zone}POW1', # zone = 1 (main), 2, 3
         'power_off':      'Z{zone}POW0',
         'power_status':   'Z{zone}POW?',
@@ -134,7 +155,7 @@ RS232_COMMANDS = {
         'mute_status':    'Z{zone}MUT?',
 
         'arc_on':         'Z1ARC1',
-        'arc_off':        'Z1ARC0'
+        'arc_off':        'Z1ARC0',
 
         'source_select':  'Z{zone}INP{source}',
         'source_status':  'Z{zone}INP?',
@@ -221,11 +242,11 @@ SERIAL_INIT_ARGS = {
     'write_timeout': TIMEOUT
 }
 
-def _get_config(amp_type: str, key: str):
-    config = AMP_CONFIG.get(amp_type)
+def _get_config(protocol_type: str, key: str):
+    config = AMP_CONFIG.get(protocol_type)
     if config:
         return config.get(key)
-    LOG.error("Invalid amp type '%s' config key '%s'; returning None", amp_type, key)
+    LOG.error("Invalid amp type '%s' config key '%s'; returning None", protocol_type, key)
     return None
 
 class AmpControlBase(object):
@@ -271,39 +292,39 @@ class AmpControlBase(object):
         """
         raise NotImplemented()
 
-def _format(amp_type: str, format_code: str, args = {}):
-    eol = _get_config(amp_type, 'command_eol')
-    command = RS232_COMMANDS[amp_type].get(format_code) + str(eol)
+def _format(protocol_type: str, format_code: str, args = {}):
+    eol = _get_config(protocol_type, 'command_eol')
+    command = RS232_COMMANDS[protocol_type].get(format_code) + str(eol)
     return command.format(**args).encode('ascii')
 
-def _set_power_cmd(amp_type, zone: int, power: bool) -> bytes:
-#    assert zone in _get_config(amp_type, 'zones')
+def _set_power_cmd(protocol_type, zone: int, power: bool) -> bytes:
+#    assert zone in _get_config(protocol_type, 'zones')
     if power:
-        return _format(amp_type, 'power_on', args = { 'zone': zone })
+        return _format(protocol_type, 'power_on', args = { 'zone': zone })
     else:
-        return _format(amp_type, 'power_off', args = { 'zone': zone })
+        return _format(protocol_type, 'power_off', args = { 'zone': zone })
 
-def _set_mute_cmd(amp_type, zone: int, mute: bool) -> bytes:
-#    assert zone in _get_config(amp_type, 'zones')
+def _set_mute_cmd(protocol_type, zone: int, mute: bool) -> bytes:
+#    assert zone in _get_config(protocol_type, 'zones')
     if mute:
-        return _format(amp_type, 'mute_on', args = { 'zone': zone })
+        return _format(protocol_type, 'mute_on', args = { 'zone': zone })
     else:
-        return _format(amp_type, 'mute_off', args = { 'zone': zone })
+        return _format(protocol_type, 'mute_off', args = { 'zone': zone })
 
-def _set_volume_cmd(amp_type, zone: int, volume: int) -> bytes:
-#    assert zone in _get_config(amp_type, 'zones')
+def _set_volume_cmd(protocol_type, zone: int, volume: int) -> bytes:
+#    assert zone in _get_config(protocol_type, 'zones')
     volume = int(max(0, min(volume, MAX_VOLUME)))
-    return _format(amp_type, 'set_volume', args = { 'zone': zone, 'volume': volume })
+    return _format(protocol_type, 'set_volume', args = { 'zone': zone, 'volume': volume })
 
-def _set_volume_cmd(amp_type, zone: int, volume: int) -> bytes:
-#    assert zone in _get_config(amp_type, 'zones')
+def _set_volume_cmd(protocol_type, zone: int, volume: int) -> bytes:
+#    assert zone in _get_config(protocol_type, 'zones')
     volume = int(max(0, min(volume, MAX_VOLUME)))
-    return _format(amp_type, 'set_volume', args = { 'zone': zone, 'volume': volume })
+    return _format(protocol_type, 'set_volume', args = { 'zone': zone, 'volume': volume })
 
-def _set_source_cmd(amp_type, zone: int, source: int) -> bytes:
-#    assert zone in _get_config(amp_type, 'zones')
-#    assert source in _get_config(amp_type, 'sources')
-    return _format(amp_type, 'set_source', args = { 'zone': zone, 'source': source })
+def _set_source_cmd(protocol_type, zone: int, source: int) -> bytes:
+#    assert zone in _get_config(protocol_type, 'zones')
+#    assert source in _get_config(protocol_type, 'sources')
+    return _format(protocol_type, 'set_source', args = { 'zone': zone, 'source': source })
 
 def get_amp_controller(amp_series: str, port_url):
     """
@@ -317,7 +338,7 @@ def get_amp_controller(amp_series: str, port_url):
         LOG.error("Unsupported amplifier series '%s'", amp_series)
         return None
 
-    amp_type = SERIES_TO_RS232_PROTOCOL[amp_series]
+    protocol_type = ANTHEM_SERIES_CONFIG[amp_series].get('protocol')
     
     lock = RLock()
 
@@ -329,8 +350,8 @@ def get_amp_controller(amp_series: str, port_url):
         return wrapper
 
     class AmpControlSync(AmpControlBase):
-        def __init__(self, amp_type, port_url):
-            self._amp_type = amp_type
+        def __init__(self, protocol_type, port_url):
+            self._protocol_type = protocol_type
             self._port = serial.serial_for_url(port_url, **SERIAL_INIT_ARGS)
 
         def _process_request(self, request: bytes, skip=0):
@@ -350,7 +371,7 @@ def get_amp_controller(amp_series: str, port_url):
             self._port.write(request)
             self._port.flush()
 
-            eol = _get_config(self._amp_type, 'command_eol')
+            eol = _get_config(self._protocol_type, 'command_eol')
             len_eol = len(eol)
 
             # receive
@@ -373,26 +394,26 @@ def get_amp_controller(amp_series: str, port_url):
 
         @synchronized
         def run_command(self, command: str, args = {}):
-            cmd = _format(self._amp_type, command, args)
+            cmd = _format(self._protocol_type, command, args)
             return self._process_request(cmd)
 
         @synchronized
         def set_power(self, zone: int, power: bool):
-            self._process_request(_set_power_cmd(self._amp_type, zone, power))
+            self._process_request(_set_power_cmd(self._protocol_type, zone, power))
 
         @synchronized
         def set_mute(self, zone: int, mute: bool):
-            self._process_request(_set_mute_cmd(self._amp_type, zone, mute))
+            self._process_request(_set_mute_cmd(self._protocol_type, zone, mute))
 
         @synchronized
         def set_volume(self, zone: int, volume: int):
-            self._process_request(_set_volume_cmd(self._amp_type, zone, volume))
+            self._process_request(_set_volume_cmd(self._protocol_type, zone, volume))
 
         @synchronized
         def set_source(self, zone: int, source: int):
-            self._process_request(_set_source_cmd(self._amp_type, zone, source))
+            self._process_request(_set_source_cmd(self._protocol_type, zone, source))
 
-    return AmpControlSync(amp_type, port_url)
+    return AmpControlSync(protocol_type, port_url)
 
 
 
@@ -410,7 +431,7 @@ def get_async_amp_controller(amp_series, port_url, loop):
         LOG.error("Unsupported amplifier series '%s'", amp_series)
         return None
 
-    amp_type = SERIES_TO_RS232_PROTOCOL[amp_series]
+    protocol_type = ANTHEM_SERIES_CONFIG[amp_series].get('protocol')
     
     lock = asyncio.Lock()
 
@@ -423,34 +444,34 @@ def get_async_amp_controller(amp_series, port_url, loop):
         return wrapper
 
     class AmpControlAsync(AmpControlBase):
-        def __init__(self, amp_type, protocol):
-            self._amp_type = amp_type
+        def __init__(self, protocol_type, protocol):
+            self._protocol_type = protocol_type
             self._protocol = protocol
 
         @locked_coro
         @asyncio.coroutine
         def run_command(self, command: str, args = {}):
-            yield from self._protocol.send( _format(self._amp_type, command, args) )
+            yield from self._protocol.send( _format(self._protocol_type, command, args) )
             
         @locked_coro
         @asyncio.coroutine
         def set_power(self, zone: int, power: bool):
-            yield from self._protocol.send(_set_power_cmd(self._amp_type, zone, power))
+            yield from self._protocol.send(_set_power_cmd(self._protocol_type, zone, power))
 
         @locked_coro
         @asyncio.coroutine
         def set_mute(self, zone: int, mute: bool):
-            yield from self._protocol.send(_set_mute_cmd(self._amp_type, zone, mute))
+            yield from self._protocol.send(_set_mute_cmd(self._protocol_type, zone, mute))
 
         @locked_coro
         @asyncio.coroutine
         def set_volume(self, zone: int, volume: int):
-            yield from self._protocol.send(_set_volume_cmd(self._amp_type, zone, volume))
+            yield from self._protocol.send(_set_volume_cmd(self._protocol_type, zone, volume))
 
         @locked_coro
         @asyncio.coroutine
         def set_source(self, zone: int, source: int):
-            yield from self._protocol.send(_set_source_cmd(self._amp_type, zone, source))
+            yield from self._protocol.send(_set_source_cmd(self._protocol_type, zone, source))
 
     class AmpControlProtocol(asyncio.Protocol):
         def __init__(self, config, loop):
@@ -497,7 +518,7 @@ def get_async_amp_controller(amp_series, port_url, loop):
                     raise
 
     _, protocol = yield from create_serial_connection(loop,
-                                                      functools.partial(AmpControlProtocol, AMP_CONFIG.get(amp_type), loop),
+                                                      functools.partial(AmpControlProtocol, AMP_CONFIG.get(protocol_type), loop),
                                                       port_url,
                                                       **SERIAL_INIT_ARGS)
-    return AmpControlAsync(amp_type, protocol)
+    return AmpControlAsync(protocol_type, protocol)
