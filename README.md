@@ -26,9 +26,9 @@ The list of series constants are enumerated in the `SUPPORTED_ANTHEM_SERIES` var
 ```python
 from anthemav_serial import get_amp_controller, ANTHEM_D2
 
-amp_series = ANTHEM_D2
 serial_port = '/dev/ttyUSB0'
-amp = get_amp_controller(amp_series, serial_port)
+amp = get_amp_controller(ANTHEM_D2, serial_port)
+
 amp.mute_on(1)
 ```
 
