@@ -186,6 +186,8 @@ RS232_COMMANDS = {
         'query_model':     'IDM?',
         'query_id':        'IDN?',
 
+        'set_echo':        'ECH{on_off}',
+
         'rename_source':   'SN{source}{name}', # 6 character name
         
         'lock_front_panel':   'FPL1',

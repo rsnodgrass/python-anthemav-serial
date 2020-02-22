@@ -1,15 +1,15 @@
 #!/usr/local/bin/python3
 
 import os
+import argparse
+
 from anthemav_serial import get_amp_controller, ANTHEM_D2
 
-tty = os.getenv('AMP_TTY', None)
+parser = argparse.ArgumentParser(description=console.__doc__)
+parser.add_argument('--tty', default='/dev/tty.usbserial-A501SGSZ', help='/dev/tty to use')
+args = parser.parse_args()
 
-if tty == None:
-    print("ERROR! Must define env variable AMP_TTY (e.g. export AMP_TTY=/dev/tty.usbserial-A501SGSZ)")
-    raise SystemExit
-
-amp = get_amp_controller(ANTHEM_D2, tty)
+amp = get_amp_controller(ANTHEM_D2, args.tty)
 print(amp)
 
 amp.set_power(1, True)
