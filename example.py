@@ -12,5 +12,6 @@ args = parser.parse_args()
 amp = get_amp_controller(ANTHEM_D2, args.tty)
 print(amp)
 
-amp.set_power(1, True)
-amp.set_source(1, 6)
+zone = 1
+amp.set_power(zone, True)
+amp.set_source(zone, 6)
