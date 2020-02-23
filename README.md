@@ -1,6 +1,6 @@
 # Python RS232 API for Anthem Receivers and Pre-Amplifiers
 
-Library for controlling Anthem receivers and pre-amplifiers (e.g. Statement D2) via RS232 serial connections.
+Library for controlling Anthem receivers and pre-amplifiers (e.g. Statement D2) via RS232 serial connections. The structure of this library is based off pymonoprice.
 
 #### Supported Anthem Models
 
@@ -14,7 +14,7 @@ This currently only supports Anthem models which communicate using Anthen's orig
 |  AVM 30                          | avm30  | ANTHEM_AVM30 | X |   |   |
 |  AVM 50, AVM 50v                 | avm50  | ANTHEM_AVM50 | X |   |   |
 |  MRX 300, MRX 500, MRX 700       | mrx    | ANTHEM_MRX   | X |   |   |
-|  AVM 60                          | avm60  | ANTHEM_AVM60 |  | X | X | 
+|  AVM 60                          | avm60  | ANTHEM_AVM60 |   | X | X | 
 |  MRX 310, MRX 510, MRX 710       | mrx1   | ANTHEM_MRX1  |   | X | X |
 |  MRX 520, MRX 720, MRX 1120      | mrx2   | ANTHEM_MRX2  |   | X | X |
 |  STR amplifiers                  | str    | ANTHEM_STR   |   | X | X |
