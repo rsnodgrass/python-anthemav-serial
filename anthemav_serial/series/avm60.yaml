@@ -11,10 +11,14 @@
     - dts_hd_master_audio
     - dts_x_ready
     - 4k
+    - dolby_surround
+    - dts_neo_6
+    - ip_control
+    - rs232_control
 
   rs232:
     protocol: anthem_gen2
-    default_baudrate: 9600
+    default_baudrate: 115200
     default_data_bits: 8
     default_stop_bits: 1
     default_parity: N
