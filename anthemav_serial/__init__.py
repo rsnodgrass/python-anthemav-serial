@@ -286,6 +286,14 @@ class AmpControlBase(object):
         """
         raise NotImplemented()
 
+    def volume_up(self, zone: int):
+        """Increase volume for zone by one step"""
+        raise NotImplemented()
+
+    def volume_down(self, zone: int):
+        """Decrease volume for zone by one step"""
+        raise NotImplemented()
+
     def set_source(self, zone: int, source: int):
         """
         Set source for zone
@@ -318,10 +326,11 @@ def _set_volume_cmd(protocol_type, zone: int, volume: int) -> bytes:
     volume = int(max(0, min(volume, MAX_VOLUME)))
     return _format(protocol_type, 'set_volume', args = { 'zone': zone, 'volume': volume })
 
-def _set_volume_cmd(protocol_type, zone: int, volume: int) -> bytes:
-#    assert zone in _get_config(protocol_type, 'zones')
-    volume = int(max(0, min(volume, MAX_VOLUME)))
-    return _format(protocol_type, 'set_volume', args = { 'zone': zone, 'volume': volume })
+def _volume_up_cmd(protocol_type, zone: int) -> bytes:
+    return _format(protocol_type, 'volume_up', args = { 'zone': zone })
+
+def _volume_down_cmd(protocol_type, zone: int) -> bytes:
+    return _format(protocol_type, 'volume_down', args = { 'zone': zone })
 
 def _set_source_cmd(protocol_type, zone: int, source: int) -> bytes:
 #    assert zone in _get_config(protocol_type, 'zones')
@@ -415,6 +424,15 @@ def get_amp_controller(amp_series: str, port_url):
         def set_source(self, zone: int, source: int):
             self._process_request(_set_source_cmd(self._protocol_type, zone, source))
 
+        @synchronized
+        def volume_up(self, zone: int):
+            self.run_command('volume_up', args = { zone: zone })
+
+        @synchronized
+        def volume_down(self, zone: int):
+            self.run_command('volume_down', args = { zone: zone })
+
+
     return AmpControlSync(protocol_type, port_url)
 
 
@@ -474,6 +492,17 @@ def get_async_amp_controller(amp_series, port_url, loop):
         @asyncio.coroutine
         def set_source(self, zone: int, source: int):
             yield from self._protocol.send(_set_source_cmd(self._protocol_type, zone, source))
+
+        @locked_coro
+        @asyncio.coroutine
+        def volume_up(self, zone: int):
+            yield from self.run_command('volume_up', args = { zone: zone })
+
+        @locked_coro
+        @asyncio.coroutine
+        def volume_down(self, zone: int):
+            yield from self.run_command('volume_down', args = { zone: zone })
+
 
     class AmpControlProtocol(asyncio.Protocol):
         def __init__(self, config, loop):
