@@ -8,12 +8,12 @@ This currently only supports Anthem models which communicate using Anthen's orig
 
 |  Model(s)                        | Series | Series Const | RS232  | IP   |
 |  ------------------------------- | ------ | ------------ |:------:|:----:|
-|  Statement D2, D2v, D2v 3D       | d2     | ANTHEM_D2    | *Gen1* | none |
-|  Statement D1                    | d1     | ANTHEM_D1    | *Gen1* | none |
-|  AVM 20                          | avm20  | ANTHEM_AVM20 | *Gen1* | none |
-|  AVM 30                          | avm30  | ANTHEM_AVM30 | *Gen1* | none |
-|  AVM 50, AVM 50v                 | avm50  | ANTHEM_AVM50 | *Gen1* | none |
-|  MRX 300, MRX 500, MRX 700       | mrx    | ANTHEM_MRX   | *Gen1* | none |
+|  Statement D2, D2v, D2v 3D       | d2     | ANTHEM_D2    | **Gen1** | none |
+|  Statement D1                    | d1     | ANTHEM_D1    | **Gen1** | none |
+|  AVM 20                          | avm20  | ANTHEM_AVM20 | **Gen1** | none |
+|  AVM 30                          | avm30  | ANTHEM_AVM30 | **Gen1** | none |
+|  AVM 50, AVM 50v                 | avm50  | ANTHEM_AVM50 | **Gen1** | none |
+|  MRX 300, MRX 500, MRX 700       | mrx    | ANTHEM_MRX   | **Gen1** | none |
 |  AVM 60                          | avm60  | ANTHEM_AVM60 | Gen2   | Gen2 | 
 |  MRX 310, MRX 510, MRX 710       | mrx1   | ANTHEM_MRX1  | Gen2   | Gen2 |
 |  MRX 520, MRX 720, MRX 1120      | mrx2   | ANTHEM_MRX2  | Gen2   | Gen2 |
