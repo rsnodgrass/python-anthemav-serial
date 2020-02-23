@@ -2,8 +2,14 @@
 
   features:
     - anthem_room_correction
-    - dolby_true_hd
     - rs232_control
+    - dolby_digital
+    - dolby_digital_ex
+    - dolby_digital_plus
+    - dolby_true_hd
+    - dts
+    - dts_96_24
+    - dts_hd_master_audio
 
   rs232:
     protocol: anthem_gen1
@@ -14,11 +20,11 @@
 
   zones:
     1: "Main"
-	  2: "Zone 2"
+    2: "Zone 2"
     3: "Zone 3"
 
   sources:
-	  0: "CD"
+    0: "CD"
     1: "STEREO"
     2: "6CH"
     3: "TAPE"

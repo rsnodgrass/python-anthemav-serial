@@ -1,16 +1,24 @@
-- series: d1
-  name: "Anthem Statement D1"
+- series: mrx2
+  name: "Anthem MRX 520/720/1120"
 
   features:
     - anthem_room_correction
+    - dolby_atmos
+    - dolby_true_hd
+    - dts_hd_master_audio
+    - dts_x_ready
+    - 4k
+    - dolby_surround
+    - dts_neo_6
+    - ip_control
     - rs232_control
-    - dolby_digital
-    - dts
-    - dts_96_24
-    
+
+  ip_control:
+    protocol: anthem_gen2  
+
   rs232:
-    protocol: anthem_gen1
-    default_baudrate: 9600
+    protocol: anthem_gen2
+    default_baudrate: 115200
     default_data_bits: 8
     default_stop_bits: 1
     default_parity: N
@@ -37,4 +45,4 @@
     7: "SAT"
     j: "SAT 2"
     8: "VCR"
-    9: "AUX"
+    9: "AUX
