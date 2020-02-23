@@ -20,11 +20,11 @@
 
   zones:
     1: "Main"
-	  2: "Zone 2"
+    2: "Zone 2"
     3: "Zone 3"
 
   sources:
-	  0: "CD"
+    0: "CD"
     1: "STEREO"
     2: "6CH"
     3: "TAPE"
