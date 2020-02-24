@@ -12,6 +12,8 @@ args = parser.parse_args()
 amp = get_amp_controller(ANTHEM_D2, args.tty)
 print(amp)
 
+# FIXME: status?
+
 zone = 1
 amp.set_power(zone, True)
 amp.set_source(zone, 6)

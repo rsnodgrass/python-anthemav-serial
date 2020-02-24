@@ -65,6 +65,18 @@ ANTHEM_SERIES_CONFIG = {
 }
 SUPPORTED_ANTHEM_SERIES = ANTHEM_SERIES_CONFIG.keys()
 
+RS232_RESPONSES = {
+    ANTHEM_RS232_GEN1: {
+        'power_status': {
+            'pattern':     "P(?P<zone>\d)P(?P<on_off>\d)",
+            'dictionary':  { 'power': "{on_off}" }
+        },
+    },
+
+    ANTHEM_RS232_GEN2: {
+
+    }
+}
 
 RS232_COMMANDS = {
     ANTHEM_RS232_GEN1: {
@@ -199,11 +211,11 @@ MAX_VOLUME = 100   # FIXME: range should be configurated by amp models
 TIMEOUT = 1        # serial operation timeout (seconds)
 
 AMP_CONFIG ={
-    ANTHEM_GEN1: {
+    ANTHEM_RS232_GEN1: {
         'command_eol':    "\n",  # x0A (Carriage Return at the end of the string
         'multi-seperator': ';',
         'default_baud_rate': 9600,
-        'sources': {
+        'sources': { # FIXME: read from yaml?
             '0': 'CD',
             '1': 'STEREO',
             '2': '6CH',
@@ -228,7 +240,7 @@ AMP_CONFIG ={
         }
     },
     
-    ANTHEM_GEN2: {
+    ANTHEM_RS232_GEN2: {
         'command_eol':    "\n",  # x0A (Carriage Return at the end of the string
         'multi-seperator': ';',
         'default_baud_rate': 115200
@@ -300,6 +312,10 @@ class AmpControlBase(object):
         :param zone: 1, 2, 3
         :param source: integer from 0 to 9
         """
+        raise NotImplemented()
+
+    def zone_status(self, zone: int) -> dict:
+        """Return a dictionary containing status details for the zone"""
         raise NotImplemented()
 
 def _format(protocol_type: str, format_code: str, args = {}):
@@ -426,11 +442,58 @@ def get_amp_controller(amp_series: str, port_url):
 
         @synchronized
         def volume_up(self, zone: int):
-            self.run_command('volume_up', args = { zone: zone })
+            self.run_command('volume_up', args = { 'zone': zone })
 
         @synchronized
         def volume_down(self, zone: int):
-            self.run_command('volume_down', args = { zone: zone })
+            self.run_command('volume_down', args = { 'zone': zone })
+
+        def _pattern_to_dictionary(self, zone: int, pattern: str, text: str) -> dict:
+            result = pattern.match(text)
+            if not result:
+                LOG.error(f"Could not parse '{test}' with pattern '{pattern}'")
+                return None
+
+            d = result.groupdict()
+            
+            # replace and 0 or 1 with True or False
+            for k, v in d.items():
+                if v == '0':
+                    d[k] = False
+                elif v == '1':
+                    d[k] = True
+
+            return d
+
+        def zone_status(self, zone: int) -> dict:
+            """Return a dictionary containing status details for the zone"""
+
+#                    'zone_status':    'P{zone}?',    # returns P{zone}S{source}V{volume}M{mute}
+#         'volume_status':  'P{zone}VM?',  # returns: P{zone}VM{sxx.x}
+
+            result = pat.match(text)
+            result.groupdict()
+
+            return {
+                'zone': zone,
+                'power': False,
+                'mute': False,
+                'volume': 
+                'source': str,
+            }
+
+
+        def _parse_status(self, dict, message):
+            # 1 find matching pattern
+            # 2 extract variable names into dictionary
+            LOG.error(f"Could not parse status message '{message}' into dictionary")
+
+
+# FIXME: get all the various status items for this zone
+#        @synchronized
+#        def status(self, zone: int):
+#            self.run_command("")
+
 
 
     return AmpControlSync(protocol_type, port_url)
@@ -496,12 +559,12 @@ def get_async_amp_controller(amp_series, port_url, loop):
         @locked_coro
         @asyncio.coroutine
         def volume_up(self, zone: int):
-            yield from self.run_command('volume_up', args = { zone: zone })
+            yield from self.run_command('volume_up', args = { 'zone': zone })
 
         @locked_coro
         @asyncio.coroutine
         def volume_down(self, zone: int):
-            yield from self.run_command('volume_down', args = { zone: zone })
+            yield from self.run_command('volume_down', args = { 'zone': zone })
 
 
     class AmpControlProtocol(asyncio.Protocol):
