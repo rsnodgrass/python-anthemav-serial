@@ -480,11 +480,12 @@ def get_amp_controller(amp_series: str, port_url):
         def _pattern_to_dictionary(self, pattern: str, text: str) -> dict:
             result = pattern.match(text)
             if not result:
-                LOG.error(f"Could not parse '{test}' with pattern '{pattern}'")
+                LOG.error(f"Could not parse '{text}' with pattern '{pattern}'")
                 return None
 
             d = result.groupdict()
             
+            # FIXME: for safety, we may want to limit which keys this applies to
             # replace and 0 or 1 with True or False
             for k, v in d.items():
                 if v == '0':
