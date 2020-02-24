@@ -6,6 +6,8 @@ import serial
 from functools import wraps
 from threading import RLock
 
+from .protocol import (get_rs232_async_protocol, DEFAULT_SERIAL_CONFIG)
+
 # FIXME:
 # The Anthem has the ability to set a "transmit" status on its RS232 port, which, acc'd the documentation, causes the unit to send ASCII data out any time it's state is changes, either by manual adjustment of the front panel or by the transmission of RS232 commands.
 #
@@ -536,7 +538,7 @@ async def get_async_amp_controller(amp_series, port_url, loop):
     lock = asyncio.Lock()
 
     def locked_coro(coro):
-        """Ensure only a single, ordered command is sent to RS232 at a time"""
+        """While this is asynchronous, ensure only a single, ordered command is sent to RS232 at a time"""
         @wraps(coro)
         async def wrapper(*args, **kwargs):
             with (await lock):
@@ -576,52 +578,5 @@ async def get_async_amp_controller(amp_series, port_url, loop):
         async def volume_down(self, zone: int):
             await self.run_command('volume_down', args = { 'zone': zone })
 
-
-    class AmpControlProtocol(asyncio.Protocol):
-        def __init__(self, config, loop):
-            super().__init__()
-            self._config = config
-            self._loop = loop
-            self._lock = asyncio.Lock()
-            self._transport = None
-            self._connected = asyncio.Event(loop=loop)
-            self.q = asyncio.Queue(loop=loop)
-
-        def connection_made(self, transport):
-            self._transport = transport
-            self._connected.set()
-            LOG.debug('port opened %s', self._transport)
-
-        def data_received(self, data):
-            asyncio.ensure_future(self.q.put(data), loop=self._loop)
-
-        async def send(self, request: bytes, skip=0):
-            await self._connected.wait()
-            result = bytearray()
-
-            eol = self._config.get('protocol_eol')
-            len_eol = len(eol)
-
-            # Only one transaction at a time
-            with (await self._lock):
-                self._transport.serial.reset_output_buffer()
-                self._transport.serial.reset_input_buffer()
-                while not self.q.empty():
-                    self.q.get_nowait()
-                self._transport.write(request)
-                try:
-                    while True:
-                        result += await asyncio.wait_for(self.q.get(), TIMEOUT, loop=self._loop)
-                        if len(result) > skip and result[-len_eol:] == eol:
-                            ret = bytes(result)
-                            LOG.debug('Received "%s"', ret)
-                            return ret.decode('ascii')
-                except asyncio.TimeoutError:
-                    LOG.error("Timeout receiving response for '%s': received='%s'", request, result)
-                    raise
-
-    _, protocol = await create_serial_connection(loop,
-                                                      functools.partial(AmpControlProtocol, AMP_CONFIG.get(protocol_type), loop),
-                                                      port_url,
-                                                      **SERIAL_INIT_ARGS)
+    protocol = get_rs232_async_protocol(port_url, DEFAULT_SERIAL_CONFIG, self._config, loop)
     return AmpControlAsync(protocol_type, protocol)

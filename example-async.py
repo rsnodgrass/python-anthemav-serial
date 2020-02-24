@@ -14,14 +14,14 @@ args = parser.parse_args()
 pp = pprint.PrettyPrinter(indent=4)
 
 async def main(loop):
-    amp = yield get_async_amp_controller(ANTHEM_D2, args.tty)
+    amp = await get_async_amp_controller(ANTHEM_D2, args.tty, loop)
     pp.pprint(amp)
 
     zone = 1
-    amp.set_power(zone, True)
+    await amp.set_power(zone, True)
 
     # show amp status
-    result = amp.zone_status(zone)
+    result = await amp.zone_status(zone)
     pp.pprint(result)
 
 
