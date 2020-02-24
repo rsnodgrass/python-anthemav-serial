@@ -364,16 +364,16 @@ def _set_source_cmd(protocol_type, zone: int, source: int) -> bytes:
     return _format(protocol_type, 'set_source', args = { 'zone': zone, 'source': source })
 
 def _precompile_patterns():
-"""Precompile all response patterns"""
+    """Precompile all response patterns"""
     for patterns in RS232_RESPONSES.values:
         for name, pattern in patterns:
             patterns[name] = re.compile(pattern)
 
 def _handle_message(protocol_type, text: str):
-"""
-Handles an arbitrary message from the RS232 device. Works both for replies
-to queries as well as streams of messages echoed from a device.
-"""
+    """
+    Handles an arbitrary message from the RS232 device. Works both for replies
+    to queries as well as streams of messages echoed from a device.
+    """
     # 1 find the matching message
     # 2 parse or dispatch
     for pattern in RS232_RESPONSES[protocol_type].values:
