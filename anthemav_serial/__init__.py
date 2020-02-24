@@ -382,7 +382,6 @@ def _handle_message(protocol_type, text: str):
             result = re.match(p, text)
 
 
-
 def get_amp_controller(amp_series: str, port_url):
     """
     Return synchronous version of amplifier control interface
@@ -518,8 +517,7 @@ def get_amp_controller(amp_series: str, port_url):
 
 
 
-@asyncio.coroutine
-def get_async_amp_controller(amp_series, port_url, loop):
+async def get_async_amp_controller(amp_series, port_url, loop):
     """
     Return asynchronous version of amplifier control interface
     :param port_url: serial port, i.e. '/dev/ttyUSB0'
