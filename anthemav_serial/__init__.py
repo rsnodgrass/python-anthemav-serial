@@ -363,6 +363,26 @@ def _set_source_cmd(protocol_type, zone: int, source: int) -> bytes:
 #    assert source in _get_config(protocol_type, 'sources')
     return _format(protocol_type, 'set_source', args = { 'zone': zone, 'source': source })
 
+def _precompile_patterns():
+"""Precompile all response patterns"""
+    for patterns in RS232_RESPONSES.values:
+        for name, pattern in patterns:
+            patterns[name] = re.compile(pattern)
+
+def _handle_message(protocol_type, text: str):
+"""
+Handles an arbitrary message from the RS232 device. Works both for replies
+to queries as well as streams of messages echoed from a device.
+"""
+    # 1 find the matching message
+    # 2 parse or dispatch
+    for pattern in RS232_RESPONSES[protocol_type].values:
+        p = re.compile(pattern) # FIXME: ideally pre-compile
+        if p.match:
+            result = re.match(p, text)
+
+
+
 def get_amp_controller(amp_series: str, port_url):
     """
     Return synchronous version of amplifier control interface
@@ -475,23 +495,7 @@ def get_amp_controller(amp_series: str, port_url):
 
             return d
 
-        def _precompile_patterns(self):
-            """Precompile all response patterns"""
-            for patterns in RS232_RESPONSES.values:
-                for name, pattern in patterns:
-                    ptterns[name] = re.compile(pattern)
 
-        def _handle_message(self, text: str):
-            """
-            Handles an arbitrary message from the RS232 device. Works both for replies
-            to queries as well as streams of messages echoed from a device.
-            """
-            # 1 find the matching message
-            # 2 parse or dispatch
-            for pattern in RS232_RESPONSES.values:
-                p = re.compile(pattern) # FIXME: ideally pre-compile
-                if p.match:
-                    result = re.match(p, text)
 
         def zone_status(self, zone: int) -> dict:
             """Return a dictionary containing status details for the zone"""
@@ -502,32 +506,14 @@ def get_amp_controller(amp_series: str, port_url):
                 for command in commands:
                     self.run_command(command, { 'zone': zone })
             
-            # read all responses from status inquieres
+            # FIXME: read all responses from status inquieres
 
-
-            result = pat.match(text)
-            result.groupdict()
-
-            return {
-                'zone': zone,
-                'power': False,
-                'mute': False,
-                'volume': 
-                'source': str,
-            }
-
+            return {}
 
         def _parse_status(self, dict, message):
             # 1 find matching pattern
             # 2 extract variable names into dictionary
             LOG.error(f"Could not parse status message '{message}' into dictionary")
-
-
-# FIXME: get all the various status items for this zone
-#        @synchronized
-#        def status(self, zone: int):
-#            self.run_command("")
-
 
 
     return AmpControlSync(protocol_type, port_url)
