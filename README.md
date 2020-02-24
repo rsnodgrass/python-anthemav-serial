@@ -1,5 +1,7 @@
 # Python RS232 API for Anthem Receivers and Pre-Amplifiers
 
+**NOTE: THIS DOES NOT WORK YET!**
+
 Library for controlling Anthem receivers and pre-amplifiers (e.g. Statement D2) via RS232 serial connections. The structure of this library is based off pymonoprice.
 
 #### Supported Anthem Models
