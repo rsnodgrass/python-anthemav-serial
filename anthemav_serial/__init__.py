@@ -23,7 +23,7 @@ ANTHEM_AVM60 = 'avm50'
 ANTHEM_MRX   = 'mrx'   # MRX 300, 500, 700
 ANTHEM_MRX1  = 'mrx1'  # MRX 310, 510, 710
 ANTHEM_MRX2  = 'mrx2'  # MRX 320, 520, 720
-ANTHEM_STR   =' str'
+ANTHEM_STR   = 'str'
 
 # FIXME: ideally all the config would move to YAML or JSON (RS232 commands, models, etc) which
 # would also allow other Anthem non-Python clients to share this info.
@@ -540,8 +540,8 @@ def get_async_amp_controller(amp_series, port_url, loop):
         @asyncio.coroutine
         @wraps(coro)
         def wrapper(*args, **kwargs):
-            with (yield from lock):
-                return (yield from coro(*args, **kwargs))
+            with (await lock):
+                return (await coro(*args, **kwargs))
         return wrapper
 
     class AmpControlAsync(AmpControlBase):
@@ -552,37 +552,37 @@ def get_async_amp_controller(amp_series, port_url, loop):
         @locked_coro
         @asyncio.coroutine
         def run_command(self, command: str, args = {}):
-            yield from self._protocol.send( _format(self._protocol_type, command, args) )
+            await self._protocol.send( _format(self._protocol_type, command, args) )
             
         @locked_coro
         @asyncio.coroutine
         def set_power(self, zone: int, power: bool):
-            yield from self._protocol.send(_set_power_cmd(self._protocol_type, zone, power))
+            await self._protocol.send(_set_power_cmd(self._protocol_type, zone, power))
 
         @locked_coro
         @asyncio.coroutine
         def set_mute(self, zone: int, mute: bool):
-            yield from self._protocol.send(_set_mute_cmd(self._protocol_type, zone, mute))
+            await self._protocol.send(_set_mute_cmd(self._protocol_type, zone, mute))
 
         @locked_coro
         @asyncio.coroutine
         def set_volume(self, zone: int, volume: int):
-            yield from self._protocol.send(_set_volume_cmd(self._protocol_type, zone, volume))
+            await self._protocol.send(_set_volume_cmd(self._protocol_type, zone, volume))
 
         @locked_coro
         @asyncio.coroutine
         def set_source(self, zone: int, source: int):
-            yield from self._protocol.send(_set_source_cmd(self._protocol_type, zone, source))
+            await self._protocol.send(_set_source_cmd(self._protocol_type, zone, source))
 
         @locked_coro
         @asyncio.coroutine
         def volume_up(self, zone: int):
-            yield from self.run_command('volume_up', args = { 'zone': zone })
+            await self.run_command('volume_up', args = { 'zone': zone })
 
         @locked_coro
         @asyncio.coroutine
         def volume_down(self, zone: int):
-            yield from self.run_command('volume_down', args = { 'zone': zone })
+            await self.run_command('volume_down', args = { 'zone': zone })
 
 
     class AmpControlProtocol(asyncio.Protocol):
@@ -605,14 +605,14 @@ def get_async_amp_controller(amp_series, port_url, loop):
 
         @asyncio.coroutine
         def send(self, request: bytes, skip=0):
-            yield from self._connected.wait()
+            await self._connected.wait()
             result = bytearray()
 
             eol = self._config.get('protocol_eol')
             len_eol = len(eol)
 
             # Only one transaction at a time
-            with (yield from self._lock):
+            with (await self._lock):
                 self._transport.serial.reset_output_buffer()
                 self._transport.serial.reset_input_buffer()
                 while not self.q.empty():
@@ -620,7 +620,7 @@ def get_async_amp_controller(amp_series, port_url, loop):
                 self._transport.write(request)
                 try:
                     while True:
-                        result += yield from asyncio.wait_for(self.q.get(), TIMEOUT, loop=self._loop)
+                        result += await asyncio.wait_for(self.q.get(), TIMEOUT, loop=self._loop)
                         if len(result) > skip and result[-len_eol:] == eol:
                             ret = bytes(result)
                             LOG.debug('Received "%s"', ret)
@@ -629,7 +629,7 @@ def get_async_amp_controller(amp_series, port_url, loop):
                     LOG.error("Timeout receiving response for '%s': received='%s'", request, result)
                     raise
 
-    _, protocol = yield from create_serial_connection(loop,
+    _, protocol = await create_serial_connection(loop,
                                                       functools.partial(AmpControlProtocol, AMP_CONFIG.get(protocol_type), loop),
                                                       port_url,
                                                       **SERIAL_INIT_ARGS)
