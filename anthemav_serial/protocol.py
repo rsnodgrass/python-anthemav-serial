@@ -19,10 +19,8 @@ DEFAULT_SERIAL_CONFIG = {
 }
 
 DEFAULT_PROTOCOL_CONFIG = {
-    'eol': "\n"
+    CONF_EOL: "\n"
 }
-
-# FIXME: there should be an impl of this somewhere, ideally without the send/response pattern only
 
 async def get_rs232_async_protocol(serial_port_url, serial_config, protocol_config, loop):
 
@@ -49,6 +47,9 @@ async def get_rs232_async_protocol(serial_port_url, serial_config, protocol_conf
         def data_received(self, data):
             asyncio.ensure_future(self._q.put(data), loop=self._loop)
 
+        def connection_lost(self, exc):
+            LOG.info(f"Port {self._serial_port_url} closed")
+
         async def send(self, request: bytes, skip=0):
             await self._connected.wait()
             result = bytearray()
@@ -60,12 +61,13 @@ async def get_rs232_async_protocol(serial_port_url, serial_config, protocol_conf
 
             # only one write/read at a time
             with (await self._lock):
+                # clear all waiting to be received data before sending the command
                 self._transport.serial.reset_output_buffer()
                 self._transport.serial.reset_input_buffer()
-
-                # send the request
                 while not self._q.empty():
                     self._q.get_nowait()
+
+                # send the request
                 self._transport.write(request)
 
                 # read the response

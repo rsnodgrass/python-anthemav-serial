@@ -367,7 +367,7 @@ def _set_source_cmd(protocol_type, zone: int, source: int) -> bytes:
 
 def _precompile_patterns():
     """Precompile all response patterns"""
-    for patterns in RS232_RESPONSES.values:
+    for patterns in RS232_RESPONSES.values():
         for name, pattern in patterns:
             patterns[name] = re.compile(pattern)
 
@@ -526,14 +526,14 @@ async def get_async_amp_controller(amp_series, port_url, loop):
     :param port_url: serial port, i.e. '/dev/ttyUSB0'
     :return: asynchronous implementation of amplifier control interface
     """
-    from serial_asyncio import create_serial_connection
 
     # sanity check the provided amplifier type
     if amp_series not in SUPPORTED_ANTHEM_SERIES:
         LOG.error("Unsupported amplifier series '%s'", amp_series)
         return None
 
-    protocol_type = ANTHEM_SERIES_CONFIG[amp_series].get('protocol')
+    config = ANTHEM_SERIES_CONFIG[amp_series]
+    protocol_type = config.get('protocol')
     
     lock = asyncio.Lock()
 
@@ -578,5 +578,5 @@ async def get_async_amp_controller(amp_series, port_url, loop):
         async def volume_down(self, zone: int):
             await self.run_command('volume_down', args = { 'zone': zone })
 
-    protocol = get_rs232_async_protocol(port_url, DEFAULT_SERIAL_CONFIG, self._config, loop)
+    protocol = get_rs232_async_protocol(port_url, DEFAULT_SERIAL_CONFIG, config, loop)
     return AmpControlAsync(protocol_type, protocol)
