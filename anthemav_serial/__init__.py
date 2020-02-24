@@ -65,12 +65,14 @@ ANTHEM_SERIES_CONFIG = {
 }
 SUPPORTED_ANTHEM_SERIES = ANTHEM_SERIES_CONFIG.keys()
 
+# ideally the following would be pre-compiled (re.compile)
 RS232_RESPONSES = {
     ANTHEM_RS232_GEN1: {
         'zone_status':       "P(?P<zone>[0-3])S(?P<source>[0-9a-z]}V(?P<volume>[0-9\.]+)M(?P<mute>[01])",
-        'zone_source':       "P(?P<zone>[0-3])S(?P<source>[0-9a-z]}",
+        'volume_status':     "P(?P<zone>[0-3])V(?P<volume>[0-9\.]+)",
         'power_status':      "P(?P<zone>[0-3])P(?P<power>[01])",
         'mute_status':       "P(?P<zone>[0-3])M(?P<mute>[01])",
+        'source_status':     "P(?P<zone>[0-3])S(?P<source>[0-9a-z]}",
         'tuner_am':          "TAT(?P<am_freq>\d+)",
         'tuner_fm':          "TFT(?P<fm_freq>[0-9\.]+)",
         'headphone_status':  "(?P<zone>[H])S(?P<source>[0-9a-z]}V(?P<volume>[0-9\.]+)M(?P<mute>[01])",
@@ -473,6 +475,12 @@ def get_amp_controller(amp_series: str, port_url):
 
             return d
 
+        def _precompile_patterns(self):
+            """Precompile all response patterns"""
+            for patterns in RS232_RESPONSES.values:
+                for name, pattern in patterns:
+                    ptterns[name] = re.compile(pattern)
+
         def _handle_message(self, text: str):
             """
             Handles an arbitrary message from the RS232 device. Works both for replies
@@ -480,14 +488,22 @@ def get_amp_controller(amp_series: str, port_url):
             """
             # 1 find the matching message
             # 2 parse or dispatch
-            for pattern in RS232_RESPONSES:
-
+            for pattern in RS232_RESPONSES.values:
+                p = re.compile(pattern) # FIXME: ideally pre-compile
+                if p.match:
+                    result = re.match(p, text)
 
         def zone_status(self, zone: int) -> dict:
             """Return a dictionary containing status details for the zone"""
 
-#                    'zone_status':    'P{zone}?',    # returns P{zone}S{source}V{volume}M{mute}
-#         'volume_status':  'P{zone}VM?',  # returns: P{zone}VM{sxx.x}
+            # send any commands necessary to get current status for all zones
+            commands = [ 'zone_status', 'power_status' ]
+            for zone in [ 1, 2, 3 ]:
+                for command in commands:
+                    self.run_command(command, { 'zone': zone })
+            
+            # read all responses from status inquieres
+
 
             result = pat.match(text)
             result.groupdict()
