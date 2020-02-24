@@ -15,14 +15,15 @@ pp = pprint.PrettyPrinter(indent=4)
 amp = get_amp_controller(ANTHEM_D2, args.tty)
 pp.pprint(amp)
 
+zone = 1
+
 # show amp status
-result = amp.get_status()
+result = amp.zone_status(zone)
 pp.pprint(result)
 
-zone = 1
 amp.set_power(zone, True)
 amp.set_source(zone, 6)
 
 # show updated status
-result = amp.get_status()
+result = amp.zone_status(zone)
 pp.pprint(result)
