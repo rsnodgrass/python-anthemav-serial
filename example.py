@@ -1,6 +1,7 @@
 #!/usr/local/bin/python3
 
 import os
+import pprint
 import argparse
 
 from anthemav_serial import get_amp_controller, ANTHEM_D2
@@ -10,9 +11,13 @@ parser.add_argument('--tty', default='/dev/tty.usbserial-A501SGSZ', help='/dev/t
 args = parser.parse_args()
 
 amp = get_amp_controller(ANTHEM_D2, args.tty)
-print(amp)
 
-# FIXME: status?
+pp = pprint.PrettyPrinter(indent=4)
+pp.print(amp)
+
+# show amp status
+result = amp.get_status()
+pp.print(result)
 
 zone = 1
 amp.set_power(zone, True)

@@ -65,29 +65,6 @@ ANTHEM_SERIES_CONFIG = {
 }
 SUPPORTED_ANTHEM_SERIES = ANTHEM_SERIES_CONFIG.keys()
 
-# ideally the following would be pre-compiled (re.compile)
-RS232_RESPONSES = {
-    ANTHEM_RS232_GEN1: {
-        'zone_status':       "P(?P<zone>[0-3])S(?P<source>[0-9a-z]}V(?P<volume>[0-9\.]+)M(?P<mute>[01])",
-        'volume_status':     "P(?P<zone>[0-3])V(?P<volume>[0-9\.]+)",
-        'power_status':      "P(?P<zone>[0-3])P(?P<power>[01])",
-        'mute_status':       "P(?P<zone>[0-3])M(?P<mute>[01])",
-        'source_status':     "P(?P<zone>[0-3])S(?P<source>[0-9a-z]}",
-        'tuner_am':          "TAT(?P<am_freq>\d+)",
-        'tuner_fm':          "TFT(?P<fm_freq>[0-9\.]+)",
-        'headphone_status':  "(?P<zone>[H])S(?P<source>[0-9a-z]}V(?P<volume>[0-9\.]+)M(?P<mute>[01])",
-    },
-
-    ANTHEM_RS232_GEN2: {
-        'power_status':      "Z(?P<zone>[0-3])POW(?P<power>[01])",
-        'volume_status':     "Z(?P<zone>[0-3])VOL(?P<volume>)[0-9\-]+)",
-        'mute_status':       "Z(?P<zone>[0-3])MUT(?P<mute>)[01])",
-        'query_model':       "IDM(?P<model>.+)",
-        'zone_source':       "Z(?P<zone>[0-3])INP(?P<input>.+)",
-        'tuner_fm':          "T(?P<zone>[0-3])FMS(?P<fm_freq>[0-9\.]+)"
-    }
-}
-
 RS232_COMMANDS = {
     ANTHEM_RS232_GEN1: {
         'power_on':       'P{zone}P1',   # zone = 1 (main), 2, 3
@@ -217,7 +194,30 @@ RS232_COMMANDS = {
     }
 }
 
-MAX_VOLUME = 100   # FIXME: range should be configurated by amp models
+# ideally the following would be pre-compiled (re.compile)
+RS232_RESPONSES = {
+    ANTHEM_RS232_GEN1: {
+        'zone_status':       "P(?P<zone>[0-3])S(?P<source>[0-9a-z]}V(?P<volume>[0-9\.]+)M(?P<mute>[01])",
+        'volume_status':     "P(?P<zone>[0-3])V(?P<volume>[0-9\.]+)",
+        'power_status':      "P(?P<zone>[0-3])P(?P<power>[01])",
+        'mute_status':       "P(?P<zone>[0-3])M(?P<mute>[01])",
+        'source_status':     "P(?P<zone>[0-3])S(?P<source>[0-9a-z]}",
+        'tuner_am':          "TAT(?P<am_freq>\d+)",
+        'tuner_fm':          "TFT(?P<fm_freq>[0-9\.]+)",
+        'headphone_status':  "(?P<zone>[H])S(?P<source>[0-9a-z]}V(?P<volume>[0-9\.]+)M(?P<mute>[01])",
+    },
+
+    ANTHEM_RS232_GEN2: {
+        'power_status':      "Z(?P<zone>[0-3])POW(?P<power>[01])",
+        'volume_status':     "Z(?P<zone>[0-3])VOL(?P<volume>)[0-9\-]+)",
+        'mute_status':       "Z(?P<zone>[0-3])MUT(?P<mute>)[01])",
+        'query_model':       "IDM(?P<model>.+)",
+        'zone_source':       "Z(?P<zone>[0-3])INP(?P<input>.+)",
+        'tuner_fm':          "T(?P<zone>[0-3])FMS(?P<fm_freq>[0-9\.]+)"
+    }
+}
+
+MAX_VOLUME = 100   # FIXME: range or explicit values should be configurated by amp models
 TIMEOUT = 1        # serial operation timeout (seconds)
 
 AMP_CONFIG ={
@@ -494,8 +494,6 @@ def get_amp_controller(amp_series: str, port_url):
                     d[k] = True
 
             return d
-
-
 
         def zone_status(self, zone: int) -> dict:
             """Return a dictionary containing status details for the zone"""
