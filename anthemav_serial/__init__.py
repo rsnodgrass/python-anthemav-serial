@@ -67,14 +67,22 @@ SUPPORTED_ANTHEM_SERIES = ANTHEM_SERIES_CONFIG.keys()
 
 RS232_RESPONSES = {
     ANTHEM_RS232_GEN1: {
-        'power_status': {
-            'pattern':     "P(?P<zone>\d)P(?P<on_off>\d)",
-            'dictionary':  { 'power': "{on_off}" }
-        },
+        'zone_status':       "P(?P<zone>[0-3])S(?P<source>[0-9a-z]}V(?P<volume>[0-9\.]+)M(?P<mute>[01])",
+        'zone_source':       "P(?P<zone>[0-3])S(?P<source>[0-9a-z]}",
+        'power_status':      "P(?P<zone>[0-3])P(?P<power>[01])",
+        'mute_status':       "P(?P<zone>[0-3])M(?P<mute>[01])",
+        'tuner_am':          "TAT(?P<am_freq>\d+)",
+        'tuner_fm':          "TFT(?P<fm_freq>[0-9\.]+)",
+        'headphone_status':  "(?P<zone>[H])S(?P<source>[0-9a-z]}V(?P<volume>[0-9\.]+)M(?P<mute>[01])",
     },
 
     ANTHEM_RS232_GEN2: {
-
+        'power_status':      "Z(?P<zone>[0-3])POW(?P<power>[01])",
+        'volume_status':     "Z(?P<zone>[0-3])VOL(?P<volume>)[0-9\-]+)",
+        'mute_status':       "Z(?P<zone>[0-3])MUT(?P<mute>)[01])",
+        'query_model':       "IDM(?P<model>.+)",
+        'zone_source':       "Z(?P<zone>[0-3])INP(?P<input>.+)",
+        'tuner_fm':          "T(?P<zone>[0-3])FMS(?P<fm_freq>[0-9\.]+)"
     }
 }
 
@@ -99,7 +107,7 @@ RS232_COMMANDS = {
 
         'source_select':  'P{zone}S{source}',
         'multi_source_select': 'P{zone}X{video_source}{audio_source}',
-        'source_status':  'P{zone}S?',  # unknown if this works
+        'zone_source':    'P{zone}S?',  # unknown if this works
 
         'trigger_on':     't{trigger}T1',
         'trigger_off':    't{trigger}T0',
@@ -448,7 +456,7 @@ def get_amp_controller(amp_series: str, port_url):
         def volume_down(self, zone: int):
             self.run_command('volume_down', args = { 'zone': zone })
 
-        def _pattern_to_dictionary(self, zone: int, pattern: str, text: str) -> dict:
+        def _pattern_to_dictionary(self, pattern: str, text: str) -> dict:
             result = pattern.match(text)
             if not result:
                 LOG.error(f"Could not parse '{test}' with pattern '{pattern}'")
@@ -464,6 +472,16 @@ def get_amp_controller(amp_series: str, port_url):
                     d[k] = True
 
             return d
+
+        def _handle_message(self, text: str):
+            """
+            Handles an arbitrary message from the RS232 device. Works both for replies
+            to queries as well as streams of messages echoed from a device.
+            """
+            # 1 find the matching message
+            # 2 parse or dispatch
+            for pattern in RS232_RESPONSES:
+
 
         def zone_status(self, zone: int) -> dict:
             """Return a dictionary containing status details for the zone"""
