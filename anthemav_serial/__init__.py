@@ -537,9 +537,9 @@ def get_async_amp_controller(amp_series, port_url, loop):
     lock = asyncio.Lock()
 
     def locked_coro(coro):
-        @asyncio.coroutine
+        """Ensure only a single, ordered command is sent to RS232 at a time"""
         @wraps(coro)
-        def wrapper(*args, **kwargs):
+        async def wrapper(*args, **kwargs):
             with (await lock):
                 return (await coro(*args, **kwargs))
         return wrapper
@@ -550,38 +550,31 @@ def get_async_amp_controller(amp_series, port_url, loop):
             self._protocol = protocol
 
         @locked_coro
-        @asyncio.coroutine
-        def run_command(self, command: str, args = {}):
+        async def run_command(self, command: str, args = {}):
             await self._protocol.send( _format(self._protocol_type, command, args) )
             
         @locked_coro
-        @asyncio.coroutine
-        def set_power(self, zone: int, power: bool):
+        async def set_power(self, zone: int, power: bool):
             await self._protocol.send(_set_power_cmd(self._protocol_type, zone, power))
 
         @locked_coro
-        @asyncio.coroutine
-        def set_mute(self, zone: int, mute: bool):
+        async def set_mute(self, zone: int, mute: bool):
             await self._protocol.send(_set_mute_cmd(self._protocol_type, zone, mute))
 
         @locked_coro
-        @asyncio.coroutine
-        def set_volume(self, zone: int, volume: int):
+        async def set_volume(self, zone: int, volume: int):
             await self._protocol.send(_set_volume_cmd(self._protocol_type, zone, volume))
 
         @locked_coro
-        @asyncio.coroutine
-        def set_source(self, zone: int, source: int):
+        async def set_source(self, zone: int, source: int):
             await self._protocol.send(_set_source_cmd(self._protocol_type, zone, source))
 
         @locked_coro
-        @asyncio.coroutine
-        def volume_up(self, zone: int):
+        async def volume_up(self, zone: int):
             await self.run_command('volume_up', args = { 'zone': zone })
 
         @locked_coro
-        @asyncio.coroutine
-        def volume_down(self, zone: int):
+        async def volume_down(self, zone: int):
             await self.run_command('volume_down', args = { 'zone': zone })
 
 
@@ -603,8 +596,7 @@ def get_async_amp_controller(amp_series, port_url, loop):
         def data_received(self, data):
             asyncio.ensure_future(self.q.put(data), loop=self._loop)
 
-        @asyncio.coroutine
-        def send(self, request: bytes, skip=0):
+        async def send(self, request: bytes, skip=0):
             await self._connected.wait()
             result = bytearray()
 
