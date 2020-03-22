@@ -1,0 +1,42 @@
+- series: avm50
+  name: "Anthem AVM50"
+
+  features:
+    - anthem_room_correction
+    - rs232_control
+    - dolby_digital
+    - dts
+    
+  rs232:
+    protocol: anthem_gen1
+    serial_defaults:
+      baudrate: 9600
+      bytesize: 8
+      parity: 'N'
+      stopbits: 1
+      timeout: 1.0
+      write_timeout: 1.0
+
+  zones:
+    1: "Main"
+    2: "Zone 2"
+    3: "Zone 3"
+
+  sources:
+    0: "CD"
+    1: "STEREO"
+    2: "6CH"
+    3: "TAPE"
+    4: "TUNER"
+    5: "DVD"
+    d: "DVD 2"
+    e: "DVD 3"
+    f: "DVD 4"
+    6: "TV"
+    g: "TV 2"
+    h: "TV 3"
+    i: "TV 4"
+    7: "SAT"
+    j: "SAT 2"
+    8: "VCR"
+    9: "AUX"

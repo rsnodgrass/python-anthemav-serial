@@ -1,0 +1,9 @@
+- protocol: anthem_rs232_gen2
+  name: "Anthem RS232 Gen2"
+
+  commands:
+    power_on:         "Z{zone}POW1"
+    power_off:        "Z{zone}POW0"
+
+  responses:
+    power_status:     "Z(?P<zone>[0-3])POW(?P<power>[01])"
