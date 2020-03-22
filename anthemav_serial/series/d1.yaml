@@ -10,10 +10,13 @@
     
   rs232:
     protocol: anthem_gen1
-    default_baudrate: 9600
-    default_data_bits: 8
-    default_stop_bits: 1
-    default_parity: N
+    serial_defaults:
+      baudrate: 9600
+      bytesize: 8
+      parity: 'N'
+      stopbits: 1
+      timeout: 1.0
+      write_timeout: 1.0
 
   zones:
     1: "Main"

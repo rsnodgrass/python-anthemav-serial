@@ -6,7 +6,7 @@ import serial
 from functools import wraps
 from threading import RLock
 
-from .protocol import (get_rs232_async_protocol, DEFAULT_SERIAL_CONFIG)
+from .protocol import get_rs232_async_protocol
 
 # FIXME:
 # The Anthem has the ability to set a "transmit" status on its RS232 port, which, acc'd the documentation, causes the unit to send ASCII data out any time it's state is changes, either by manual adjustment of the front panel or by the transmission of RS232 commands.
@@ -374,7 +374,7 @@ def _handle_message(protocol_type, text: str):
             result = re.match(p, text)
 
 
-def get_amp_controller(amp_series: str, port_url):
+def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
     """
     Return synchronous version of amplifier control interface
     :param port_url: serial port, i.e. '/dev/ttyUSB0'
@@ -388,6 +388,11 @@ def get_amp_controller(amp_series: str, port_url):
 
     protocol_type = ANTHEM_SERIES_CONFIG[amp_series].get('protocol')
     
+    # merge any serial initialization changes from the client
+    rs232_config = ANTHEM_SERIES_CONFIG[amp_series].get('rs232')
+    serial_config = rs232_config['serial_defaults']
+    serial_config.update( serial_config_overrides )
+
     lock = RLock()
 
     def synchronized(func):
@@ -398,14 +403,9 @@ def get_amp_controller(amp_series: str, port_url):
         return wrapper
 
     class AmpControlSync(AmpControlBase):
-        def __init__(self, protocol_type, port_url, serial_config = {}):
+        def __init__(self, protocol_type, port_url, serial_config):
             self._protocol_type = protocol_type
-
-            # merge any serial initialization changes from the client
-            serial_init_args = DEFAULT_SERIAL_CONFIG
-            serial_init_args.update( serial_config )
-
-            self._port = serial.serial_for_url(port_url, **serial_init_args)
+            self._port = serial.serial_for_url(port_url, **serial_config)
 
         def _process_request(self, request: bytes, skip=0):
             """
@@ -511,11 +511,11 @@ def get_amp_controller(amp_series: str, port_url):
             LOG.error(f"Could not parse status message '{message}' into dictionary")
 
 
-    return AmpControlSync(protocol_type, port_url)
+    return AmpControlSync(protocol_type, port_url, serial_config)
 
 
 
-async def get_async_amp_controller(amp_series, port_url, loop, serial_config = {}):
+async def get_async_amp_controller(amp_series, port_url, loop, serial_config_overrides = {}):
     """
     Return asynchronous version of amplifier control interface
     :param port_url: serial port, i.e. '/dev/ttyUSB0'
@@ -531,10 +531,9 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config = {
     protocol_type = config.get('protocol')
 
     # merge any serial initialization changes from the client
-    serial_init_args = DEFAULT_SERIAL_CONFIG
-    serial_init_args.update( serial_config )
-
-DEFAULT_SERIAL_CONFIG
+    rs232_config = ANTHEM_SERIES_CONFIG[amp_series].get('rs232')
+    serial_config = rs232_config['serial_defaults']
+    serial_config.update( serial_config_overrides )
     
     lock = asyncio.Lock()
 
@@ -579,5 +578,5 @@ DEFAULT_SERIAL_CONFIG
         async def volume_down(self, zone: int):
             await self.run_command('volume_down', args = { 'zone': zone })
 
-    protocol = get_rs232_async_protocol(port_url, serial_init_args, config, loop)
+    protocol = get_rs232_async_protocol(port_url, serial_config, config, loop)
     return AmpControlAsync(protocol_type, protocol)
