@@ -9,13 +9,15 @@ LOG = logging.getLogger(__name__)
 
 CONF_EOL = 'eol'
 
+DEFAULT_TIMEOUT = 1.0
+
 DEFAULT_SERIAL_CONFIG = {
     'baudrate':      9600,
     'bytesize':      serial.EIGHTBITS,
     'parity':        serial.PARITY_NONE,
     'stopbits':      serial.STOPBITS_ONE,
-    'timeout':       1.0,
-    'write_timeout': 1.0
+    'timeout':       DEFAULT_TIMEOUT,
+    'write_timeout': DEFAULT_TIMEOUT
 }
 
 DEFAULT_PROTOCOL_CONFIG = {

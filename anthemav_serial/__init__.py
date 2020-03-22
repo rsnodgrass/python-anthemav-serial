@@ -220,7 +220,6 @@ RS232_RESPONSES = {
 }
 
 MAX_VOLUME = 100   # FIXME: range or explicit values should be configurated by amp models
-TIMEOUT = 1        # serial operation timeout (seconds)
 
 AMP_CONFIG ={
     ANTHEM_RS232_GEN1: {
@@ -257,15 +256,6 @@ AMP_CONFIG ={
         'multi-seperator': ';',
         'default_baud_rate': 115200
     }
-}
-
-SERIAL_INIT_ARGS = {
-    'baudrate':      19200,
-    'bytesize':      serial.EIGHTBITS,
-    'parity':        serial.PARITY_NONE,
-    'stopbits':      serial.STOPBITS_ONE,
-    'timeout':       TIMEOUT,
-    'write_timeout': TIMEOUT
 }
 
 def _get_config(protocol_type: str, key: str):
@@ -408,9 +398,14 @@ def get_amp_controller(amp_series: str, port_url):
         return wrapper
 
     class AmpControlSync(AmpControlBase):
-        def __init__(self, protocol_type, port_url):
+        def __init__(self, protocol_type, port_url, serial_config = {}):
             self._protocol_type = protocol_type
-            self._port = serial.serial_for_url(port_url, **SERIAL_INIT_ARGS)
+
+            # merge any serial initialization changes from the client
+            serial_init_args = DEFAULT_SERIAL_CONFIG
+            serial_init_args.update( serial_config )
+
+            self._port = serial.serial_for_url(port_url, **serial_init_args)
 
         def _process_request(self, request: bytes, skip=0):
             """
@@ -520,7 +515,7 @@ def get_amp_controller(amp_series: str, port_url):
 
 
 
-async def get_async_amp_controller(amp_series, port_url, loop):
+async def get_async_amp_controller(amp_series, port_url, loop, serial_config = {}):
     """
     Return asynchronous version of amplifier control interface
     :param port_url: serial port, i.e. '/dev/ttyUSB0'
@@ -534,6 +529,12 @@ async def get_async_amp_controller(amp_series, port_url, loop):
 
     config = ANTHEM_SERIES_CONFIG[amp_series]
     protocol_type = config.get('protocol')
+
+    # merge any serial initialization changes from the client
+    serial_init_args = DEFAULT_SERIAL_CONFIG
+    serial_init_args.update( serial_config )
+
+DEFAULT_SERIAL_CONFIG
     
     lock = asyncio.Lock()
 
@@ -547,7 +548,7 @@ async def get_async_amp_controller(amp_series, port_url, loop):
 
     class AmpControlAsync(AmpControlBase):
         def __init__(self, protocol_type, protocol):
-            self._protocol_type = protocol_type
+            self._protocol_type = protocol_type            
             self._protocol = protocol
 
         @locked_coro
@@ -578,5 +579,5 @@ async def get_async_amp_controller(amp_series, port_url, loop):
         async def volume_down(self, zone: int):
             await self.run_command('volume_down', args = { 'zone': zone })
 
-    protocol = get_rs232_async_protocol(port_url, DEFAULT_SERIAL_CONFIG, config, loop)
+    protocol = get_rs232_async_protocol(port_url, serial_init_args, config, loop)
     return AmpControlAsync(protocol_type, protocol)
