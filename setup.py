@@ -3,7 +3,7 @@
 import os
 import sys
 
-VERSION = '0.0.3'
+VERSION = '0.0.4'
 
 try:
     from setuptools import setup
@@ -46,8 +46,9 @@ setup(name='anthemav_serial',
       author='Ryan Snodgrass',
       author_email='rsnodgrass@gmail.com',
       license='MIT',
-      install_requires=['pyserial>=3.4','pyserial-asyncio>=0.4'],
       packages=['anthemav_serial'],
+      install_requires=['pyserial>=3.4','pyserial-asyncio>=0.4'],
+      include_package_data=True,
       classifiers=['Development Status :: 4 - Beta',
                    'License :: OSI Approved :: MIT License',
                    'Programming Language :: Python :: 3' ],
