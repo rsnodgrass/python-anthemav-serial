@@ -2,7 +2,10 @@ import asyncio
 import functools
 import logging
 import re
+import os
 import serial
+import yaml
+
 from functools import wraps
 from threading import RLock
 
@@ -33,6 +36,7 @@ ANTHEM_STR   = 'str'
 ANTHEM_RS232_GEN1 = 'anthem_gen1'
 ANTHEM_RS232_GEN2 = 'anthem_gen2'
 
+# FIXME: move this all to the yaml config
 ANTHEM_SERIES_CONFIG = {
     ANTHEM_D2:    
         { 'protocol': ANTHEM_RS232_GEN1,
@@ -40,15 +44,15 @@ ANTHEM_SERIES_CONFIG = {
     ANTHEM_D1:    
         { 'protocol': ANTHEM_RS232_GEN1,
           'name': "Anthem D1" },
-    ANTHEM_AVM50: 
-        { 'protocol': ANTHEM_RS232_GEN1,
-          'name': "Anthem AVM50" },
     ANTHEM_AVM30: 
         { 'protocol': ANTHEM_RS232_GEN1,
           'name': "Anthem AVM30" },
     ANTHEM_AVM20: 
         { 'protocol': ANTHEM_RS232_GEN1,
           'name': "Anthem AVM20" },
+    ANTHEM_AVM50: 
+        { 'protocol': ANTHEM_RS232_GEN1,
+          'name': "Anthem AVM50" },
     ANTHEM_AVM60: 
         { 'protocol': ANTHEM_RS232_GEN2,
           'name': "Anthem AVM60" },
@@ -257,6 +261,17 @@ AMP_CONFIG ={
         'default_baud_rate': 115200
     }
 }
+
+def _load_config(series_slug):
+    """Load the amp series configuration"""
+
+    config_file = f"{os.path.basename(__file__)}/series/{series_slug}.yaml"
+    with open(config_file, 'r') as stream:
+        try:
+            return yaml.load(stream, Loader=yaml.FullLoader)
+        except yaml.YAMLError as exc:
+            sys.stderr.write(f"FATAL! {exc}")
+            sys.exit(1)
 
 def _get_config(protocol_type: str, key: str):
     config = AMP_CONFIG.get(protocol_type)
@@ -528,8 +543,14 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
         return None
 
     config = ANTHEM_SERIES_CONFIG[amp_series]
+    if not config:
+        LOG.error(f"Invalid Anthem amp series '{amp_series}', cannot get controller")
+        return None
+
     protocol_type = config.get('protocol')
 
+
+# FIXME: load the YAML!
     # merge any serial initialization changes from the client
     rs232_config = ANTHEM_SERIES_CONFIG[amp_series].get('rs232')
     serial_config = rs232_config['serial_defaults']
