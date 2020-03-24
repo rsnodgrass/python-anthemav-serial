@@ -9,7 +9,7 @@ import yaml
 from functools import wraps
 from threading import RLock
 
-from .config import (DEVICE_CONFIG, PROTOCOL_CONFIG)
+from .config import (DEVICE_CONFIG, PROTOCOL_CONFIG, get_with_log)
 from .protocol import get_rs232_async_protocol
 
 # FIXME:
@@ -20,221 +20,10 @@ from .protocol import get_rs232_async_protocol
 
 LOG = logging.getLogger(__name__)
 
-ANTHEM_D2    = 'd2'    # D2, D2v, D2v 3D
-ANTHEM_D1    = 'd1'
-ANTHEM_AVM20 = 'avm20'
-ANTHEM_AVM30 = 'avm30'
-ANTHEM_AVM50 = 'avm50'
-ANTHEM_AVM60 = 'avm50'
-ANTHEM_MRX   = 'mrx'   # MRX 300, 500, 700
-ANTHEM_MRX1  = 'mrx1'  # MRX 310, 510, 710
-ANTHEM_MRX2  = 'mrx2'  # MRX 320, 520, 720
-ANTHEM_STR   = 'str'
-
-# FIXME: ideally all the config would move to YAML or JSON (RS232 commands, models, etc) which
-# would also allow other Anthem non-Python clients to share this info.
-
-ANTHEM_RS232_GEN1 = 'anthem_gen1'
-ANTHEM_RS232_GEN2 = 'anthem_gen2'
-
-RS232_COMMANDS = {
-    ANTHEM_RS232_GEN1: {
-        'power_on':       'P{zone}P1',   # zone = 1 (main), 2, 3
-        'power_off':      'P{zone}P0',
-        'power_status':   'P{zone}P?',   # returns: P{zone}P{on_off}
-
-        'zone_status':    'P{zone}?',    # returns P{zone}S{source}V{volume}M{mute}
-
-        # set volume to sxx.xx dB where sxx.x = MainMaxVol to -95.5 dB in 0.5 dB steps
-        'set_volume':     'P{zone}VM{volume}', 
-        'volume_up':      'P{zone}VMU',
-        'volume_down':    'P{zone}VMD',
-        'volume_status':  'P{zone}VM?',  # returns: P{zone}VM{sxx.x}
-
-        'mute_on':        'P{zone}M1',
-        'mute_off':       'P{zone}M0',
-        'mute_toggle':    'P{zone}MT',
-        'mute_status':    'P{zone}M?',   # returns: P{zone}M{on_off}
-
-        'source_select':  'P{zone}S{source}',
-        'multi_source_select': 'P{zone}X{video_source}{audio_source}',
-        'zone_source':    'P{zone}S?',  # unknown if this works
-
-        'trigger_on':     't{trigger}T1',
-        'trigger_off':    't{trigger}T0',
-
-        'fm_tune':        'TFT{channel}',      # channel = xxx.x (87.5 to 107.9, in 0.1 MHz step)
-        'fm_preset':      'TFP{bank}{preset}',
-        'am_tune':        'TAT{channel:04}',   # channel = xxxxs (540 to 1600, in 10 KHz step)
-        'am_preset':      'TAP{bank}{preset}',
-        'tuner_frequeny': 'TT?',               # returns TATxxxx or TFTxxx.x where
-        'tuner_up':       'T+',
-        'tuner_down':     'T-',
-        'seek_up':        'T+',
-        'seek_down':      'T-',
-
-        # Dolby Digital mode dynamic range; 0 = normal; 1 = reduced; 2 = late night
-        'set_dynamic_range': 'P{zone}C{range}',
-
-        'display_message':   'P{zone}x{row}{message}', # row = 1 or 2
-
-        'source_seek_up':    'P{zone}SS+',
-        'source_seek_down':  'P{zone}SS-',
-
-        'sleep_timer':       'P1Z{sleep_mode}', # 0 = off; 1 = 30 min; 2 = 60 min; 3 = 90 min
-
-        'headphone_status':      'H?', # returns HS{source}V{volume}M{mute}
-        'headphone_volume':      'HV{db}', 
-        'headphone_volume_up':   'HVU',
-        'headphone_volume_down': 'HVD',
-        'headphone_mute_on':     'HM1',
-        'headphone_mute_off':    'HM0',
-        'headphone_mute_toggle': 'HMT',
-
-        'set_time_format': 'STF{on_off}', # on = 24 hour, off = 12 hour
-        'set_time':        'STC{hour:02}:{min:02}', # 00:00 to 23:59 (24hr format); 12:00AM to 11:59PM (12hr format)
-        'set_day_of_week': 'STD{dow}',  # dow = 1 (Sunday) to 7 (Saturday)
-
-        # baud_rate = 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200
-        'set_baud_rate':   'SSB{baud_rate}',
-
-        # returns: unit type, revision# , build date (AVM 2,Version 1.00,Jun 26 2000)
-        'query_version':   '?',
-        
-        'rename_source':   'SN{source}{name}', # 6 character name
-        
-        'lock_front_panel':   'FPL1',
-        'unlock_front_panel': 'FPL0',
-    },
-
-    ANTHEM_RS232_GEN2: {
-        'power_on':       'Z{zone}POW1', # zone = 1 (main), 2, 3
-        'power_off':      'Z{zone}POW0',
-        'power_status':   'Z{zone}POW?',
-
-        'zone_status':    'P{zone}?',
-
-        # set volume to sxx.xx dB where sxx.x = MainMaxVol to -95.5 dB in 0.5 dB steps
-        'set_volume':     'Z{zone}VOL{volume}', 
-        'volume_up':      'Z{zone}VUP',
-        'volume_down':    'Z{zone}VDN',
-        'volume_status':  'Z{zone}VOL?',
-
-        'mute_on':        'Z{zone}MUT1',
-        'mute_off':       'Z{zone}MUT0',
-        'mute_toggle':    'Z{zone}MUTt',
-        'mute_status':    'Z{zone}MUT?',
-
-        'arc_on':         'Z1ARC1',
-        'arc_off':        'Z1ARC0',
-
-        'source_select':  'Z{zone}INP{source}',
-        'source_status':  'Z{zone}INP?',
-
-        'trigger_on':     'R{trigger}SET1',
-        'trigger_off':    'R{trigger}SET0',
-
-        'fm_tune':        'T1FMS{channel}',      # channel = xxx.x (87.5 to 107.9, in 0.1 MHz step)
-        'fm_status':      'T1FMS?',
-        'fm_preset':      'T1PSL{preset}',
-        'tuner_up':       'T1TUP',
-        'tuner_down':     'T1TDN',
-        'seek_up':        'T1KUP',
-        'seek_down':      'T1KDN',
-        'preset_up':      'T1PUP',
-        'preset_down':    'T1PDN',
-
-        'display_message':   'Z1MSG{row}{message}', # row = 1 or 2
-
-        'source_seek_up':    'P{zone}SS+',
-        'source_seek_down':  'P{zone}SS-',
-
-        # baud_rate = 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200
-        'set_baud_rate':   'SSB{baud_rate}',
-
-        # returns: unit type, revision# , build date (IDQMRX 1120 US 0.2.3Oct 23 2015)"
-        'query_version':   'IDQ?',
-        'query_model':     'IDM?',
-        'query_id':        'IDN?',
-
-        'set_echo':        'ECH{on_off}',
-
-        'rename_source':   'SN{source}{name}', # 6 character name
-        
-        'lock_front_panel':   'FPL1',
-        'unlock_front_panel': 'FPL0',
-    }
-}
-
-# ideally the following would be pre-compiled (re.compile)
-RS232_RESPONSES = {
-    ANTHEM_RS232_GEN1: {
-        'zone_status':       "P(?P<zone>[0-3])S(?P<source>[0-9a-z]}V(?P<volume>[0-9\.]+)M(?P<mute>[01])",
-        'volume_status':     "P(?P<zone>[0-3])V(?P<volume>[0-9\.]+)",
-        'power_status':      "P(?P<zone>[0-3])P(?P<power>[01])",
-        'mute_status':       "P(?P<zone>[0-3])M(?P<mute>[01])",
-        'source_status':     "P(?P<zone>[0-3])S(?P<source>[0-9a-z]}",
-        'tuner_am':          "TAT(?P<am_freq>\d+)",
-        'tuner_fm':          "TFT(?P<fm_freq>[0-9\.]+)",
-        'headphone_status':  "(?P<zone>[H])S(?P<source>[0-9a-z]}V(?P<volume>[0-9\.]+)M(?P<mute>[01])",
-    },
-
-    ANTHEM_RS232_GEN2: {
-        'power_status':      "Z(?P<zone>[0-3])POW(?P<power>[01])",
-        'volume_status':     "Z(?P<zone>[0-3])VOL(?P<volume>)[0-9\-]+)",
-        'mute_status':       "Z(?P<zone>[0-3])MUT(?P<mute>)[01])",
-        'query_model':       "IDM(?P<model>.+)",
-        'zone_source':       "Z(?P<zone>[0-3])INP(?P<input>.+)",
-        'tuner_fm':          "T(?P<zone>[0-3])FMS(?P<fm_freq>[0-9\.]+)"
-    }
-}
-
 MAX_VOLUME = 100   # FIXME: range or explicit values should be configurated by amp models
 
-AMP_CONFIG ={
-    ANTHEM_RS232_GEN1: {
-        'command_eol':    "\n",  # x0A (Carriage Return at the end of the string
-        'multi-seperator': ';',
-        'default_baud_rate': 9600,
-        'sources': { # FIXME: read from yaml?
-            '0': 'CD',
-            '1': 'STEREO',
-            '2': '6CH',
-            '3': 'TAPE',
-            '4': 'TUNER',
-
-            '5': 'DVD',
-            'd': 'DVD 2',
-            'e': 'DVD 3',
-            'f': 'DVD 4',
-
-            '6': 'TV',
-            'g': 'TV 2',
-            'h': 'TV 3',
-            'i': 'TV 4',
-
-            '7': 'SAT',
-            'j': 'SAT 2',
-
-            '8': 'VCR',
-            '9': 'AUX'
-        }
-    },
-    
-    ANTHEM_RS232_GEN2: {
-        'command_eol':    "\n",  # x0A (Carriage Return at the end of the string
-        'multi-seperator': ';',
-        'default_baud_rate': 115200
-    }
-}
-
-
-def _get_config(protocol_type: str, key: str):
-    config = AMP_CONFIG.get(protocol_type)
-    if config:
-        return config.get(key)
-    LOG.error("Invalid amp type '%s' config key '%s'; returning None", protocol_type, key)
-    return None
+# ictionary pattern matches for all responses for each protocol
+RS232_RESPONSE_PATTERNS = []
 
 class AmpControlBase(object):
     """
@@ -292,8 +81,14 @@ class AmpControlBase(object):
         raise NotImplemented()
 
 def _format(protocol_type: str, format_code: str, args = {}):
-    eol = _get_config(protocol_type, 'command_eol')
-    command = RS232_COMMANDS[protocol_type].get(format_code) + str(eol)
+    config = PROTOCOL_CONFIG[protocol_type]
+
+    command = config['commands'].get(format_code)
+    if not command:
+        LOG.error("Invalid command format '{format_code}' for protocol {protocol_type}; returning None")
+        return None
+
+    command += str(config['command_eol'])
     return command.format(**args).encode('ascii')
 
 def _set_power_cmd(protocol_type, zone: int, power: bool) -> bytes:
@@ -328,22 +123,32 @@ def _set_source_cmd(protocol_type, zone: int, source: int) -> bytes:
 
 def _precompile_patterns():
     """Precompile all response patterns"""
-    for patterns in RS232_RESPONSES.values():
-        for name, pattern in patterns:
+
+    for protocol, config in PROTOCOL_CONFIG:
+        patterns = []
+        for name, pattern in config['responses']:
             patterns[name] = re.compile(pattern)
+        RS232_RESPONSE_PATTERNS[protocol] = patterns
 
 def _handle_message(protocol_type, text: str):
     """
     Handles an arbitrary message from the RS232 device. Works both for replies
     to queries as well as streams of messages echoed from a device.
     """
+
+    # pre-compile all patterns if empty
+    if not RS232_RESPONSE_PATTERNS:
+        _precompile_patterns()
+
+    # FIXME
+    # if a matching response is found, dispatch to appropriate handler to update
     # 1 find the matching message
     # 2 parse or dispatch
-    for pattern in RS232_RESPONSES[protocol_type].values:
-        p = re.compile(pattern) # FIXME: ideally pre-compile
-        if p.match:
-            result = re.match(p, text)
-
+    for pattern_name, pattern in RS232_RESPONSE_PATTERNS[protocol_type]:
+        result = pattern.match
+        if result:
+            # FIXME: split out all patterns and update by key name
+            return None
 
 def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
     """
@@ -355,7 +160,7 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
     # sanity check the provided amplifier type
     config = DEVICE_CONFIG[amp_series]
     if not config:
-        LOG.error("Unsupported amplifier series '%s'", amp_series)
+        LOG.error(f"Unsupported amplifier series '{amp_series}'")
         return None
 
     protocol_type = config['rs232_protocol']
@@ -376,6 +181,7 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
     class AmpControlSync(AmpControlBase):
         def __init__(self, protocol_type, port_url, serial_config):
             self._protocol_type = protocol_type
+            self._config = PROTOCOL_CONFIG[protocol_type]
             self._port = serial.serial_for_url(port_url, **serial_config)
 
         def _process_request(self, request: bytes, skip=0):
@@ -395,7 +201,7 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
             self._port.write(request)
             self._port.flush()
 
-            eol = _get_config(self._protocol_type, 'command_eol')
+            eol = self._config['command_eol']
             len_eol = len(eol)
 
             # receive

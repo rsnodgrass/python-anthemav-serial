@@ -1,6 +1,9 @@
 - protocol: anthem_rs232_gen1
   name: "Anthem RS232 Gen1"
 
+  multi-seperator: ";"
+  command_eol:     "\n"
+
   commands:
     power_on:       'P{zone}P1'   # zone = 1 (main), 2, 3
     power_off:      'P{zone}P0'

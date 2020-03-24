@@ -31,6 +31,13 @@ def _load_config_dir(directory):
 
     return config_tree
 
+def get_with_log(name, dictionary, key: str):
+    value = dictionary.get(key)
+    if value:
+        return dictionary.get(key)
+    LOG.warning(f"Invalid key '{key}' in dictionary '{name}'; returning None")
+    return None
+
 config_dir = os.path.basename(__file__)
 DEVICE_CONFIG = _load_config_dir(f"{config_dir}/series")
 PROTOCOL_CONFIG = _load_config_dir(f"{config_dir}/protocols")
