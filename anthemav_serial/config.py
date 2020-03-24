@@ -2,6 +2,7 @@
 import os
 import yaml
 import logging
+import pprint as pp
 
 LOG = logging.getLogger(__name__)
 
@@ -15,7 +16,8 @@ def _load_config(config_file):
     LOG.info(f"Loading {config_file}")
     with open(config_file, 'r') as stream:
         try:
-            return yaml.load(stream, Loader=yaml.FullLoader)
+            config = yaml.load(stream, Loader=yaml.FullLoader)
+            return config[0]
         except yaml.YAMLError as exc:
             LOG.error(f"Failed reading config {config_file}: {exc}")
             return None
@@ -42,3 +44,6 @@ def get_with_log(name, dictionary, key: str):
 config_dir = os.path.dirname(__file__)
 DEVICE_CONFIG = _load_config_dir(f"{config_dir}/series")
 PROTOCOL_CONFIG = _load_config_dir(f"{config_dir}/protocols")
+
+#print(pp.pprint(DEVICE_CONFIG))
+#print(pp.pprint(PROTOCOL_CONFIG))

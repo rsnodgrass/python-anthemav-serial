@@ -8,15 +8,13 @@ from anthemav_serial import get_amp_controller
 
 parser = argparse.ArgumentParser(description='Anthem RS232 client example')
 parser.add_argument('--tty', help='/dev/tty to use (e.g. /dev/tty.usbserial-A501SGSZ)')
-parser.add_argument('--baud', help='baud rate')
+parser.add_argument('--baud', default=9600, help='baud rate')
 args = parser.parse_args()
 
 pp = pprint.PrettyPrinter(indent=4)
 
 config = {
-    'rs232': {
-        'baudrate': args.baud
-    }
+    'baudrate': args.baud
 }
 
 series = 'd2v'

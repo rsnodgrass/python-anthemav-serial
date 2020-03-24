@@ -8,7 +8,7 @@
     - dts
     - dts_96_24
     
-  rs232_protocol: anthem_gen1
+  rs232_protocol: anthem_rs232_gen1
   rs232_defaults:
     baudrate: 9600
     bytesize: 8

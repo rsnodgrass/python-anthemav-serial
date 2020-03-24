@@ -13,16 +13,19 @@ from .config import (DEVICE_CONFIG, PROTOCOL_CONFIG, get_with_log)
 from .protocol import get_rs232_async_protocol
 
 # FIXME:
-# The Anthem has the ability to set a "transmit" status on its RS232 port, which, acc'd the documentation, causes the unit to send ASCII data out any time it's state is changes, either by manual adjustment of the front panel or by the transmission of RS232 commands.
+# The Anthem has the ability to set a "transmit" status on its RS232 port, which, acc'd the documentation, 
+# causes the unit to send ASCII data out any time it's state is changes, either by manual adjustment of the
+# front panel or by the transmission of RS232 commands.
 #
 # - should we limit MAX volume by default; and have a way to disable 'safety'?
 #   could be an issue with damaging speakers
 
 LOG = logging.getLogger(__name__)
 
-MAX_VOLUME = 100   # FIXME: range or explicit values should be configurated by amp models
+# FIXME: range or explicit volume values should be configered per amp series in yaml
+MAX_VOLUME = 100
 
-# ictionary pattern matches for all responses for each protocol
+# cached dictionary pattern matches for all responses for each protocol
 RS232_RESPONSE_PATTERNS = []
 
 class AmpControlBase(object):
@@ -123,7 +126,6 @@ def _set_source_cmd(protocol_type, zone: int, source: int) -> bytes:
 
 def _precompile_patterns():
     """Precompile all response patterns"""
-
     for protocol, config in PROTOCOL_CONFIG:
         patterns = []
         for name, pattern in config['responses']:
@@ -148,6 +150,7 @@ def _handle_message(protocol_type, text: str):
         result = pattern.match
         if result:
             # FIXME: split out all patterns and update by key name
+            LOG.warning(f"Ignoring response for pattern {pattern_name}")
             return None
 
 def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
@@ -354,5 +357,5 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
         async def volume_down(self, zone: int):
             await self.run_command('volume_down', args = { 'zone': zone })
 
-    protocol = get_rs232_async_protocol(port_url, serial_config, PROTOCOL_CONFIG[protocol_type], loop)
+    protocol = await get_rs232_async_protocol(port_url, serial_config, PROTOCOL_CONFIG[protocol_type], loop)
     return AmpControlAsync(protocol_type, protocol)
