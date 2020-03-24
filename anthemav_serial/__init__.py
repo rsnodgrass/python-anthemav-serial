@@ -354,5 +354,5 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
         async def volume_down(self, zone: int):
             await self.run_command('volume_down', args = { 'zone': zone })
 
-    protocol = get_rs232_async_protocol(port_url, serial_config, config, loop)
+    protocol = get_rs232_async_protocol(port_url, serial_config, PROTOCOL_CONFIG[protocol_type], loop)
     return AmpControlAsync(protocol_type, protocol)

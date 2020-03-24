@@ -4,7 +4,7 @@ import os
 import pprint
 import argparse
 
-from anthemav_serial import get_amp_controller, ANTHEM_D2
+from anthemav_serial import get_amp_controller
 
 parser = argparse.ArgumentParser(description='Anthem RS232 client example')
 parser.add_argument('--tty', help='/dev/tty to use (e.g. /dev/tty.usbserial-A501SGSZ)')
@@ -19,7 +19,8 @@ config = {
     }
 }
 
-amp = get_amp_controller(ANTHEM_D2, args.tty, config)
+series = 'd2v'
+amp = get_amp_controller(series, args.tty, config)
 pp.pprint(amp)
 
 zone = 1

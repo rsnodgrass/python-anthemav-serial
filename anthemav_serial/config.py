@@ -11,6 +11,7 @@ PROTOCOL_CONFIG = {}
 def _load_config(config_file):
     """Load the amp series configuration"""
 
+    print(f"Loading {config_file}")
     LOG.info(f"Loading {config_file}")
     with open(config_file, 'r') as stream:
         try:
@@ -38,6 +39,6 @@ def get_with_log(name, dictionary, key: str):
     LOG.warning(f"Invalid key '{key}' in dictionary '{name}'; returning None")
     return None
 
-config_dir = os.path.basename(__file__)
+config_dir = os.path.dirname(__file__)
 DEVICE_CONFIG = _load_config_dir(f"{config_dir}/series")
 PROTOCOL_CONFIG = _load_config_dir(f"{config_dir}/protocols")

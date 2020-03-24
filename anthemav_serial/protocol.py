@@ -7,11 +7,7 @@ from serial_asyncio import create_serial_connection
 
 LOG = logging.getLogger(__name__)
 
-CONF_EOL = 'eol'
-
-DEFAULT_PROTOCOL_CONFIG = {
-    CONF_EOL: "\n"
-}
+CONF_EOL = 'command_eol'
 
 async def get_rs232_async_protocol(serial_port_url, serial_config, protocol_config, loop):
 
@@ -45,7 +41,8 @@ async def get_rs232_async_protocol(serial_port_url, serial_config, protocol_conf
             await self._connected.wait()
             result = bytearray()
 
-            eol = self._config.get(CONF_EOL)
+            # FIXME: what about the multi-line separator for a single send?
+            eol = self._config[CONF_EOL]
             if eol == None:
                 eol = '\n'
             len_eol = len(eol)
