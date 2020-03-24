@@ -9,6 +9,7 @@ import yaml
 from functools import wraps
 from threading import RLock
 
+from .config import (DEVICE_CONFIG, PROTOCOL_CONFIG)
 from .protocol import get_rs232_async_protocol
 
 # FIXME:
@@ -35,41 +36,6 @@ ANTHEM_STR   = 'str'
 
 ANTHEM_RS232_GEN1 = 'anthem_gen1'
 ANTHEM_RS232_GEN2 = 'anthem_gen2'
-
-# FIXME: move this all to the yaml config
-ANTHEM_SERIES_CONFIG = {
-    ANTHEM_D2:    
-        { 'protocol': ANTHEM_RS232_GEN1,
-          'name': "Anthem D2" },
-    ANTHEM_D1:    
-        { 'protocol': ANTHEM_RS232_GEN1,
-          'name': "Anthem D1" },
-    ANTHEM_AVM30: 
-        { 'protocol': ANTHEM_RS232_GEN1,
-          'name': "Anthem AVM30" },
-    ANTHEM_AVM20: 
-        { 'protocol': ANTHEM_RS232_GEN1,
-          'name': "Anthem AVM20" },
-    ANTHEM_AVM50: 
-        { 'protocol': ANTHEM_RS232_GEN1,
-          'name': "Anthem AVM50" },
-    ANTHEM_AVM60: 
-        { 'protocol': ANTHEM_RS232_GEN2,
-          'name': "Anthem AVM60" },
-    ANTHEM_MRX:   
-        { 'protocol': ANTHEM_RS232_GEN1,
-          'name': "Anthem MRX" },
-    ANTHEM_MRX1:  
-        { 'protocol': ANTHEM_RS232_GEN2,
-          'name': "Anthem MRX1" },
-    ANTHEM_MRX2:  
-        { 'protocol': ANTHEM_RS232_GEN2,
-          'name': "Anthem MRX2" },
-    ANTHEM_STR:   
-        { 'protocol': ANTHEM_RS232_GEN2,
-          'name': "Anthem STR" }
-}
-SUPPORTED_ANTHEM_SERIES = ANTHEM_SERIES_CONFIG.keys()
 
 RS232_COMMANDS = {
     ANTHEM_RS232_GEN1: {
@@ -262,16 +228,6 @@ AMP_CONFIG ={
     }
 }
 
-def _load_config(series_slug):
-    """Load the amp series configuration"""
-
-    config_file = f"{os.path.basename(__file__)}/series/{series_slug}.yaml"
-    with open(config_file, 'r') as stream:
-        try:
-            return yaml.load(stream, Loader=yaml.FullLoader)
-        except yaml.YAMLError as exc:
-            sys.stderr.write(f"FATAL! {exc}")
-            sys.exit(1)
 
 def _get_config(protocol_type: str, key: str):
     config = AMP_CONFIG.get(protocol_type)
@@ -397,15 +353,15 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
     """
 
     # sanity check the provided amplifier type
-    if amp_series not in SUPPORTED_ANTHEM_SERIES:
+    config = DEVICE_CONFIG[amp_series]
+    if not config:
         LOG.error("Unsupported amplifier series '%s'", amp_series)
         return None
 
-    protocol_type = ANTHEM_SERIES_CONFIG[amp_series].get('protocol')
-    
+    protocol_type = config['rs232_protocol']
+
     # merge any serial initialization changes from the client
-    rs232_config = ANTHEM_SERIES_CONFIG[amp_series].get('rs232')
-    serial_config = rs232_config['serial_defaults']
+    serial_config = config['rs232_defaults']
     serial_config.update( serial_config_overrides )
 
     lock = RLock()
@@ -538,22 +494,15 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
     """
 
     # sanity check the provided amplifier type
-    if amp_series not in SUPPORTED_ANTHEM_SERIES:
-        LOG.error("Unsupported amplifier series '%s'", amp_series)
-        return None
-
-    config = ANTHEM_SERIES_CONFIG[amp_series]
+    config = DEVICE_CONFIG[amp_series]
     if not config:
         LOG.error(f"Invalid Anthem amp series '{amp_series}', cannot get controller")
         return None
 
-    protocol_type = config.get('protocol')
+    protocol_type = config['rs232_protocol']
 
-
-# FIXME: load the YAML!
     # merge any serial initialization changes from the client
-    rs232_config = ANTHEM_SERIES_CONFIG[amp_series].get('rs232')
-    serial_config = rs232_config['serial_defaults']
+    serial_config = config['rs232_defaults']
     serial_config.update( serial_config_overrides )
     
     lock = asyncio.Lock()

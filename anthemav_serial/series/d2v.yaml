@@ -11,15 +11,14 @@
     - dts_96_24
     - dts_hd_master_audio
 
-  rs232:
-    protocol: anthem_gen1
-    serial_defaults:
-      baudrate: 9600
-      bytesize: 8
-      parity: 'N'
-      stopbits: 1
-      timeout: 1.0
-      write_timeout: 1.0
+  rs232_protocol: anthem_gen1
+  rs232_defaults:
+    baudrate: 9600
+    bytesize: 8
+    parity: N
+    stopbits: 1
+    timeout: 1.0
+    write_timeout: 1.0
 
   zones:
     1: "Main"

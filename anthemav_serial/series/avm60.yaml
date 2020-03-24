@@ -16,15 +16,14 @@
   ip_control:
     protocol: anthem_gen2  
 
-  rs232:
-    protocol: anthem_gen2
-    serial_defaults:
-      baudrate: 115200
-      bytesize: 8
-      parity: 'N'
-      stopbits: 1
-      timeout: 0.5
-      write_timeout: 0.5
+  rs232_protocol: anthem_gen2
+  rs232_defaults:
+    baudrate: 115200
+    bytesize: 8
+    parity: N
+    stopbits: 1
+    timeout: 0.5
+    write_timeout: 0.5
 
   zones:
     1: "Main"
