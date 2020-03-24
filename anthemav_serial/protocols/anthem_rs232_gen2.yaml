@@ -1,6 +1,8 @@
 - protocol: anthem_rs232_gen2
   name: "Anthem RS232 Gen2"
 
+  boolean_fields:   [ 'mute', 'power' ]
+
   commands:
     power_on:       'Z{zone}POW1' # zone = 1 (main), 2, 3
     power_off:      'Z{zone}POW0'

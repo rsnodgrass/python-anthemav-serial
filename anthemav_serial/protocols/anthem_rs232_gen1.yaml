@@ -2,52 +2,54 @@
   name: "Anthem RS232 Gen1"
 
   multi-seperator: ";"
-  command_eol:     "\n"
+  command_eol: "\n"
+
+  boolean_fields: [ 'mute', 'power' ]
 
   commands:
-    power_on:       'P{zone}P1'   # zone = 1 (main), 2, 3
-    power_off:      'P{zone}P0'
-    power_status:   'P{zone}P?'   # returns: P{zone}P{on_off}
+    power_on:              'P{zone}P1'   # zone = 1 (main), 2, 3
+    power_off:             'P{zone}P0'
+    power_status:          'P{zone}P?'   # returns: P{zone}P{on_off}
 
-    zone_status:    'P{zone}?'    # returns P{zone}S{source}V{volume}M{mute}
+    zone_status:           'P{zone}?'    # returns P{zone}S{source}V{volume}M{mute}
 
     # set volume to sxx.xx dB where sxx.x = MainMaxVol to -95.5 dB in 0.5 dB steps
-    set_volume:     'P{zone}VM{volume}' 
-    volume_up:      'P{zone}VMU'
-    volume_down:    'P{zone}VMD'
-    volume_status:  'P{zone}VM?'  # returns: P{zone}VM{sxx.x}
+    set_volume:            'P{zone}VM{volume}' 
+    volume_up:             'P{zone}VMU'
+    volume_down:           'P{zone}VMD'
+    volume_status:         'P{zone}VM?'  # returns: P{zone}VM{sxx.x}
 
-    mute_on:        'P{zone}M1'
-    mute_off:       'P{zone}M0'
-    mute_toggle:    'P{zone}MT'
-    mute_status:    'P{zone}M?'   # returns: P{zone}M{on_off}
+    mute_on:               'P{zone}M1'
+    mute_off:              'P{zone}M0'
+    mute_toggle:           'P{zone}MT'
+    mute_status:           'P{zone}M?'   # returns: P{zone}M{on_off}
 
-    source_select:  'P{zone}S{source}'
-    multi_source_select: 'P{zone}X{video_source}{audio_source}'
-    zone_source:    'P{zone}S?'  # unknown if this works
+    source_select:         'P{zone}S{source}'
+    multi_source_select:   'P{zone}X{video_source}{audio_source}'
+    zone_source:           'P{zone}S?'  # unknown if this works
 
-    trigger_on:     't{trigger}T1'
-    trigger_off:    't{trigger}T0'
+    trigger_on:            't{trigger}T1'
+    trigger_off:           't{trigger}T0'
 
-    fm_tune:        'TFT{channel}'      # channel = xxx.x (87.5 to 107.9, in 0.1 MHz step)
-    fm_preset:      'TFP{bank}{preset}'
-    am_tune:        'TAT{channel:04}'   # channel = xxxxs (540 to 1600, in 10 KHz step)
-    am_preset:      'TAP{bank}{preset}'
-    tuner_frequeny: 'TT?'               # returns TATxxxx or TFTxxx.x where
-    tuner_up:       'T+'
-    tuner_down:     'T-'
-    seek_up:        'T+'
-    seek_down:      'T-'
+    fm_tune:               'TFT{channel}'      # channel = xxx.x (87.5 to 107.9, in 0.1 MHz step)
+    fm_preset:             'TFP{bank}{preset}'
+    am_tune:               'TAT{channel:04}'   # channel = xxxxs (540 to 1600, in 10 KHz step)
+    am_preset:             'TAP{bank}{preset}'
+    tuner_frequeny:        'TT?'               # returns TATxxxx or TFTxxx.x where
+    tuner_up:              'T+'
+    tuner_down:            'T-'
+    seek_up:               'T+'
+    seek_down:             'T-'
 
         # Dolby Digital mode dynamic range; 0 = normal; 1 = reduced; 2 = late night
-    set_dynamic_range: 'P{zone}C{range}'
+    set_dynamic_range:     'P{zone}C{range}'
 
-    display_message:   'P{zone}x{row}{message}' # row = 1 or 2
+    display_message:       'P{zone}x{row}{message}' # row = 1 or 2
 
-    source_seek_up:    'P{zone}SS+'
-    source_seek_down:  'P{zone}SS-'
+    source_seek_up:        'P{zone}SS+'
+    source_seek_down:      'P{zone}SS-'
 
-    sleep_timer:       'P1Z{sleep_mode}' # 0 = off; 1 = 30 min; 2 = 60 min; 3 = 90 min
+    sleep_timer:           'P1Z{sleep_mode}' # 0 = off; 1 = 30 min; 2 = 60 min; 3 = 90 min
 
     headphone_status:      'H?' # returns HS{source}V{volume}M{mute}
     headphone_volume:      'HV{db}' 
@@ -57,28 +59,28 @@
     headphone_mute_off:    'HM0'
     headphone_mute_toggle: 'HMT'
 
-    set_time_format: 'STF{on_off}' # on = 24 hour, off = 12 hour
-    set_time:        'STC{hour:02}:{min:02}' # 00:00 to 23:59 (24hr format); 12:00AM to 11:59PM (12hr format)
-    set_day_of_week: 'STD{dow}'  # dow = 1 (Sunday) to 7 (Saturday)
+    set_time_format:       'STF{on_off}' # on = 24 hour, off = 12 hour
+    set_time:              'STC{hour:02}:{min:02}' # 00:00 to 23:59 (24hr format); 12:00AM to 11:59PM (12hr format)
+    set_day_of_week:       'STD{dow}'  # dow = 1 (Sunday) to 7 (Saturday)
 
     # baud_rate = 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200
-    set_baud_rate:   'SSB{baud_rate}'
+    set_baud_rate:         'SSB{baud_rate}'
 
-    # returns: unit type, revision# , build date (AVM 2,Version 1.00,Jun 26 2000)
-    query_version:   '?'
+    # returns: unit type, version, build date   (AVM 2,Version 1.00,Jun 26 2000)
+    query_version:         '?'
 
-    rename_source:   'SN{source}{name}' # 6 character name
+    rename_source:         'SN{source}{name}' # 6 character name
         
-    lock_front_panel:   'FPL1'
-    unlock_front_panel: 'FPL0'
+    lock_front_panel:      'FPL1'
+    unlock_front_panel:    'FPL0'
 
   responses:
-    zone_status:       "P(?P<zone>[0-3])S(?P<source>[0-9a-z]}V(?P<volume>[0-9\\.]+)M(?P<mute>[01])"
-    volume_status:     "P(?P<zone>[0-3])V(?P<volume>[0-9\\.]+)"
-    power_status:      "P(?P<zone>[0-3])P(?P<power>[01])"
-    mute_status:       "P(?P<zone>[0-3])M(?P<mute>[01])"
-    source_status:     "P(?P<zone>[0-3])S(?P<source>[0-9a-z]}"
-    tuner_am:          "TAT(?P<am_freq>\\d+)"
-    tuner_fm:          "TFT(?P<fm_freq>[0-9\\.]+)"
-    headphone_status:  "(?P<zone>[H])S(?P<source>[0-9a-z]}V(?P<volume>[0-9\\.]+)M(?P<mute>[01])"
+    zone_status:           "P(?P<zone>[0-3])S(?P<source>[0-9a-z]}V(?P<volume>[0-9\\.]+)M(?P<mute>[01])"
+    volume_status:         "P(?P<zone>[0-3])V(?P<volume>[0-9\\.]+)"
+    power_status:          "P(?P<zone>[0-3])P(?P<power>[01])"
+    mute_status:           "P(?P<zone>[0-3])M(?P<mute>[01])"
+    source_status:         "P(?P<zone>[0-3])S(?P<source>[0-9a-z]}"
+    tuner_am:              "TAT(?P<am_freq>\\d+)"
+    tuner_fm:              "TFT(?P<fm_freq>[0-9\\.]+)"
+    headphone_status:      "(?P<zone>[H])S(?P<source>[0-9a-z]}V(?P<volume>[0-9\\.]+)M(?P<mute>[01])"
   

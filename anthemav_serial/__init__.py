@@ -170,7 +170,8 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
 
     # merge any serial initialization changes from the client
     serial_config = config['rs232_defaults']
-    serial_config.update( serial_config_overrides )
+    if serial_config_overrides:
+        serial_config.update( serial_config_overrides )
 
     lock = RLock()
 
@@ -213,8 +214,8 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
                 c = self._port.read(1)
                 if not c:
                     ret = bytes(result)
-                    print('Result "%s"', result)
-                    LOG.info(result)
+#                    print('Result "%s"', result)
+                    LOG.info("Serial read result: %s", result)
                     raise serial.SerialTimeoutException(
                         'Connection timed out! Last received bytes {}'.format([hex(a) for a in result]))
                 result += c
@@ -255,6 +256,7 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
             self.run_command('volume_down', args = { 'zone': zone })
 
         def _pattern_to_dictionary(self, pattern: str, text: str) -> dict:
+            """Convert the pattern to a dictionary, replacing 0 and 1's with True/False"""
             result = pattern.match(text)
             if not result:
                 LOG.error(f"Could not parse '{text}' with pattern '{pattern}'")
@@ -262,13 +264,16 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
 
             d = result.groupdict()
             
-            # FIXME: for safety, we may want to limit which keys this applies to
-            # replace and 0 or 1 with True or False
+            # type convert any pre-configured fields
+            # TODO: this could be a lot more efficient LOL
+            boolean_fields = PROTOCOL_CONFIG['boolean_fields']
             for k, v in d.items():
-                if v == '0':
-                    d[k] = False
-                elif v == '1':
-                    d[k] = True
+                if k in boolean_fields:
+                    # replace and 0 or 1 with True or False
+                    if v == '0':
+                        d[k] = False
+                    elif v == '1':
+                        d[k] = True
 
             return d
 
@@ -312,7 +317,8 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
 
     # merge any serial initialization changes from the client
     serial_config = config['rs232_defaults']
-    serial_config.update( serial_config_overrides )
+    if serial_config_overrides:
+        serial_config.update( serial_config_overrides )
     
     lock = asyncio.Lock()
 
