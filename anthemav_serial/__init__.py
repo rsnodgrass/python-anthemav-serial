@@ -162,19 +162,14 @@ def _handle_message(protocol_type, text: str):
     Handles an arbitrary message from the RS232 device. Works both for replies
     to queries as well as streams of messages echoed from a device.
     """
-
-    # FIXME
-    # if a matching response is found, dispatch to appropriate handler to update
-    # 1 find the matching message
-    # 2 parse or dispatch
     for pattern_name, pattern in RS232_RESPONSE_PATTERNS[protocol_type].items():
         match = pattern.match(text)
         if match:
+            LOG.info(f"Response for pattern {pattern_name} for text {text}")
             result = _pattern_to_dictionary(protocol_type, match, text)
-
-            # FIXME: split out all patterns and update by key name
-            LOG.warning(f"Ignoring response for pattern {pattern_name} for text {text} but did parse: {result}")
-            return None
+            LOG.info(f"Parsed response text {text}: {result}")
+            return result
+    return None
 
 def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
     """
