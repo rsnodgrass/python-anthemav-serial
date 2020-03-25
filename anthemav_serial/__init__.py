@@ -1,10 +1,11 @@
-import asyncio
-import functools
 import logging
+
 import re
 import os
-import serial
 import yaml
+import serial
+import asyncio
+import functools
 
 from functools import wraps
 from threading import RLock
@@ -126,11 +127,11 @@ def _set_source_cmd(protocol_type, zone: int, source: int) -> bytes:
 
 def _precompile_patterns():
     """Precompile all response patterns"""
-    for protocol, config in PROTOCOL_CONFIG:
+    for protocol_type, config in PROTOCOL_CONFIG.iteritems():
         patterns = []
-        for name, pattern in config['responses']:
+        for name, pattern in config['responses'].iteritems():
             patterns[name] = re.compile(pattern)
-        RS232_RESPONSE_PATTERNS[protocol] = patterns
+        RS232_RESPONSE_PATTERNS[protocol_type] = patterns
 
 def _pattern_to_dictionary(protocol_type, pattern, source_text: str) -> dict:
     """Convert the pattern to a dictionary, replacing 0 and 1's with True/False"""
