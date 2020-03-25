@@ -62,7 +62,7 @@
 
   responses:
     power_status:      "Z(?P<zone>[0-3])POW(?P<power>[01])"
-    volume_status:     "Z(?P<zone>[0-3])VOL(?P<volume>)[0-9\\-]+)"
+    volume_status:     "Z(?P<zone>[0-3])VOL(?P<volume>[0-9\\-]+)"
     mute_status:       "Z(?P<zone>[0-3])MUT(?P<mute>)[01])"
     query_model:       "IDM(?P<model>.+)"
     zone_source:       "Z(?P<zone>[0-3])INP(?P<input>.+)"

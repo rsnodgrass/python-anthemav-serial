@@ -27,7 +27,7 @@ LOG = logging.getLogger(__name__)
 MAX_VOLUME = 100
 
 # cached dictionary pattern matches for all responses for each protocol
-RS232_RESPONSE_PATTERNS = []
+RS232_RESPONSE_PATTERNS = {}
 
 class AmpControlBase(object):
     """

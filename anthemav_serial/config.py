@@ -13,7 +13,6 @@ def _load_config(config_file):
     """Load the amp series configuration"""
 
     print(f"Loading {config_file}")
-    LOG.info(f"Loading {config_file}")
     with open(config_file, 'r') as stream:
         try:
             config = yaml.load(stream, Loader=yaml.FullLoader)
