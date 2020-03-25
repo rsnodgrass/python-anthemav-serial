@@ -348,9 +348,9 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
             await self.run_command('volume_down', args = { 'zone': zone })
 
         @locked_coro
-        def zone_status(self, zone: int) -> dict:
+        async def zone_status(self, zone: int) -> dict:
             """Return a dictionary containing status details for the zone"""
-            response = self.run_command('zone_status', { 'zone': zone })
+            response = await self.run_command('zone_status', { 'zone': zone })
             LOG.warning(f"Received zone {zone} status response: {response}")
             return _handle_message(self._protocol_type, response)  # FIXME: could give a hint for which response pattern to match
 
