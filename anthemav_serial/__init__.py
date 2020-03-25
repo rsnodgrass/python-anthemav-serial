@@ -27,7 +27,18 @@ LOG = logging.getLogger(__name__)
 MAX_VOLUME = 100
 
 # cached dictionary pattern matches for all responses for each protocol
+def _precompile_response_patterns():
+    """Precompile all response patterns"""
+    for protocol_type, config in PROTOCOL_CONFIG.items():
+        patterns = {}
+#        LOG.debug(f"Precompile patterns for {protocol_type}")
+        for name, pattern in config['responses'].items():
+            LOG.debug(f"Precompiling pattern {name}")
+            patterns[name] = re.compile(pattern)
+        RS232_RESPONSE_PATTERNS[protocol_type] = patterns
+
 RS232_RESPONSE_PATTERNS = {}
+_precompile_response_patterns()
 
 class AmpControlBase(object):
     """
@@ -125,14 +136,6 @@ def _set_source_cmd(protocol_type, zone: int, source: int) -> bytes:
 #    assert source in _get_config(protocol_type, 'sources')
     return _format(protocol_type, 'set_source', args = { 'zone': zone, 'source': source })
 
-def _precompile_patterns():
-    """Precompile all response patterns"""
-    for protocol_type, config in PROTOCOL_CONFIG.items():
-        patterns = {}
-        for name, pattern in config['responses'].items():
-            patterns[name] = re.compile(pattern)
-        RS232_RESPONSE_PATTERNS[protocol_type] = patterns
-
 def _pattern_to_dictionary(protocol_type, pattern, source_text: str) -> dict:
     """Convert the pattern to a dictionary, replacing 0 and 1's with True/False"""
     result = pattern.match(source_text)
@@ -159,10 +162,6 @@ def _handle_message(protocol_type, text: str):
     Handles an arbitrary message from the RS232 device. Works both for replies
     to queries as well as streams of messages echoed from a device.
     """
-
-    # pre-compile all patterns if empty
-    if not RS232_RESPONSE_PATTERNS:
-        _precompile_patterns()
 
     # FIXME
     # if a matching response is found, dispatch to appropriate handler to update
