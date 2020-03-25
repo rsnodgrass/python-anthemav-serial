@@ -33,7 +33,7 @@ def _precompile_response_patterns():
         patterns = {}
 #        LOG.debug(f"Precompile patterns for {protocol_type}")
         for name, pattern in config['responses'].items():
-            LOG.debug(f"Precompiling pattern {name}")
+#           LOG.debug(f"Precompiling pattern {name}")
             patterns[name] = re.compile(pattern)
         RS232_RESPONSE_PATTERNS[protocol_type] = patterns
 
@@ -167,7 +167,7 @@ def _handle_message(protocol_type, text: str):
     # if a matching response is found, dispatch to appropriate handler to update
     # 1 find the matching message
     # 2 parse or dispatch
-    for pattern_name, pattern in RS232_RESPONSE_PATTERNS[protocol_type]:
+    for pattern_name, pattern in RS232_RESPONSE_PATTERNS[protocol_type].items():
         match = pattern.match(text)
         if match:
             result = _pattern_to_dictionary(protocol_type, match, text)
