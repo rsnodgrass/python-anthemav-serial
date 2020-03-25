@@ -132,6 +132,27 @@ def _precompile_patterns():
             patterns[name] = re.compile(pattern)
         RS232_RESPONSE_PATTERNS[protocol] = patterns
 
+def _pattern_to_dictionary(protocol_type, pattern, source_text: str) -> dict:
+    """Convert the pattern to a dictionary, replacing 0 and 1's with True/False"""
+    result = pattern.match(source_text)
+    if not result:
+        LOG.error(f"Could not parse '{source_text}' with pattern '{pattern}'")
+        return None
+
+    d = result.groupdict()
+            
+    # type convert any pre-configured fields
+    # TODO: this could be a lot more efficient LOL
+    boolean_fields = PROTOCOL_CONFIG[protocol_type].get('boolean_fields')
+    for k, v in d.items():
+        if k in boolean_fields:
+            # replace and 0 or 1 with True or False
+            if v == '0':
+                d[k] = False
+            elif v == '1':
+                d[k] = True
+    return d
+
 def _handle_message(protocol_type, text: str):
     """
     Handles an arbitrary message from the RS232 device. Works both for replies
@@ -147,10 +168,12 @@ def _handle_message(protocol_type, text: str):
     # 1 find the matching message
     # 2 parse or dispatch
     for pattern_name, pattern in RS232_RESPONSE_PATTERNS[protocol_type]:
-        result = pattern.match
-        if result:
+        match = pattern.match(text)
+        if match:
+            result = _pattern_to_dictionary(protocol_type, match, text)
+
             # FIXME: split out all patterns and update by key name
-            LOG.warning(f"Ignoring response for pattern {pattern_name}")
+            LOG.warning(f"Ignoring response for pattern {pattern_name} for text {text} but did parse: {result}")
             return None
 
 def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
@@ -255,46 +278,12 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
         def volume_down(self, zone: int):
             self.run_command('volume_down', args = { 'zone': zone })
 
-        def _pattern_to_dictionary(self, pattern: str, text: str) -> dict:
-            """Convert the pattern to a dictionary, replacing 0 and 1's with True/False"""
-            result = pattern.match(text)
-            if not result:
-                LOG.error(f"Could not parse '{text}' with pattern '{pattern}'")
-                return None
-
-            d = result.groupdict()
-            
-            # type convert any pre-configured fields
-            # TODO: this could be a lot more efficient LOL
-            boolean_fields = PROTOCOL_CONFIG['boolean_fields']
-            for k, v in d.items():
-                if k in boolean_fields:
-                    # replace and 0 or 1 with True or False
-                    if v == '0':
-                        d[k] = False
-                    elif v == '1':
-                        d[k] = True
-
-            return d
-
+        @synchronized
         def zone_status(self, zone: int) -> dict:
             """Return a dictionary containing status details for the zone"""
-
-            # send any commands necessary to get current status for all zones
-            commands = [ 'zone_status', 'power_status' ]
-            for zone in [ 1, 2, 3 ]:
-                for command in commands:
-                    self.run_command(command, { 'zone': zone })
-            
-            # FIXME: read all responses from status inquieres
-
-            return {}
-
-        def _parse_status(self, dict, message):
-            # 1 find matching pattern
-            # 2 extract variable names into dictionary
-            LOG.error(f"Could not parse status message '{message}' into dictionary")
-
+            response = self.run_command('zone_status', { 'zone': zone })
+            LOG.warning(f"Received zone {zone} status response: {response}")
+            return _handle_message(self._protocol_type, response)
 
     return AmpControlSync(protocol_type, port_url, serial_config)
 
@@ -362,6 +351,14 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
         @locked_coro
         async def volume_down(self, zone: int):
             await self.run_command('volume_down', args = { 'zone': zone })
+
+        @locked_coro
+        def zone_status(self, zone: int) -> dict:
+            """Return a dictionary containing status details for the zone"""
+            response = self.run_command('zone_status', { 'zone': zone })
+            LOG.warning(f"Received zone {zone} status response: {response}")
+            return _handle_message(self._protocol_type, response)  # FIXME: could give a hint for which response pattern to match
+
 
     protocol = await get_rs232_async_protocol(port_url, serial_config, PROTOCOL_CONFIG[protocol_type], loop)
     return AmpControlAsync(protocol_type, protocol)
