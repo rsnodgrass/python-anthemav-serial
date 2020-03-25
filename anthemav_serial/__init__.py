@@ -128,7 +128,7 @@ def _set_source_cmd(protocol_type, zone: int, source: int) -> bytes:
 def _precompile_patterns():
     """Precompile all response patterns"""
     for protocol_type, config in PROTOCOL_CONFIG.items():
-        patterns = []
+        patterns = {}
         for name, pattern in config['responses'].items():
             patterns[name] = re.compile(pattern)
         RS232_RESPONSE_PATTERNS[protocol_type] = patterns
