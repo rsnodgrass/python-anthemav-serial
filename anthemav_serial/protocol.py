@@ -94,7 +94,7 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
                                 LOG.debug("Multiple response lines, ignore all but the first: %s", result_lines)
 
                             result = result_lines[0].decode('ascii')
-                            LOG.debug('Received "%s"', result)
+#                            LOG.debug('Received "%s"', result)
                             return result
                 except asyncio.TimeoutError:
                     LOG.error("Timeout receiving response for '%s': received='%s'", request, data)
