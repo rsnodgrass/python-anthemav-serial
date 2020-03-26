@@ -22,7 +22,7 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
             self._timeout = self._config.get('timeout')
             if self._timeout is None:
                 self._timeout = 1.0 # default to 1 second if None
-            LOG.info("Timeout set to {self._timeout}")
+            LOG.info(f"Timeout set to {self._timeout}")
 
             self._lock = asyncio.Lock()
             self._transport = None
@@ -76,6 +76,6 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
                     raise
 
     factory = functools.partial(RS232ControlProtocol, serial_port_url, protocol_config, loop)
-    LOG.debug("Creating RS232 connection to {serial_port_url}: {serial_config}")
+    LOG.debug(f"Creating RS232 connection to {serial_port_url}: {serial_config}")
     _, protocol = await create_serial_connection(loop, factory, serial_port_url, **serial_config)
     return protocol

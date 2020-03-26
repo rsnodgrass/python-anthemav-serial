@@ -25,11 +25,14 @@ def _load_config_dir(directory):
     config_tree = {}
 
     for filename in os.listdir(directory):
-        if filename.endswith('.yaml'):
-            series = filename.split('.yaml')[0]
-            config = _load_config(os.path.join(directory, filename))
-            if config:
-                config_tree[series] = config
+        try:
+          if filename.endswith('.yaml'):
+                series = filename.split('.yaml')[0]
+                config = _load_config(os.path.join(directory, filename))
+                if config:
+                    config_tree[series] = config
+        except Exception as e:
+            LOG.warning(f"Failed parsing {filename}; ignoring that configuratio file")
 
     return config_tree
 
