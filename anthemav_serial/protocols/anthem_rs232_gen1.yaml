@@ -77,7 +77,7 @@
 
     save_current_settings:       'SfSC' # Current settings are used when applying power to the unit.
     save_user_settings:          'SfSU'
-    restore_user_settings:       'SfLU
+    restore_user_settings:       'SfLU'
     save_installer_settings:     'SfSI'
     restore_installer_settings:  'SfLI'
 
