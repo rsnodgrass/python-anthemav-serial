@@ -35,16 +35,15 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
             LOG.debug(f"Port {self._serial_port_url} opened {self._transport}")
 
         def data_received(self, data):
-            LOG.debug(f"Received from {self._serial_port_url}: {data}")
+#            LOG.debug(f"Received from {self._serial_port_url}: {data}")
             asyncio.ensure_future(self._q.put(data), loop=self._loop)
 
         def connection_lost(self, exc):
             LOG.debug(f"Port {self._serial_port_url} closed")
 
         async def send(self, request: bytes, skip=0):
-            result = bytearray()
-            eol = self._config[CONF_EOL]
-            len_eol = len(eol)
+            data = bytearray()
+            eol = self._config[CONF_EOL].encode('ascii')
 
             await self._connected.wait()
 
@@ -61,15 +60,19 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
                 self._transport.write(request)
 
                 # read the response
-                LOG.debug("Reading RS232 response...")
                 try:
                     while True:
-                        result += await asyncio.wait_for(self._q.get(), self._timeout, loop=self._loop)
-#                        LOG.debug("Partial receive %s", bytes(result).decode('ascii'))
-                        if len(result) > skip and result[-len_eol:] == eol:
-                            ret = bytes(result)
-                            LOG.debug('Received "%s"', ret)
-                            return ret.decode('ascii')
+                        data += await asyncio.wait_for(self._q.get(), self._timeout, loop=self._loop)
+#                        LOG.debug("Partial receive %s", bytes(data).decode('ascii'))
+                        if eol in data:
+                            # only return the first line
+                            result_lines = data.split(eol)
+                            if len(result_lines) > 1:
+                                LOG.debug("Multiple response lines, ignore all but the first: %s", result_lines)
+
+                            result = result_lines[0].decode('ascii')
+                            LOG.debug('Received "%s"', result)
+                            return result
                 except asyncio.TimeoutError:
                     LOG.error("Timeout receiving response for '%s': received='%s'", request, result)
                     raise

@@ -31,6 +31,7 @@ def _precompile_response_patterns():
     """Precompile all response patterns"""
     for protocol_type, config in PROTOCOL_CONFIG.items():
         patterns = {}
+
 #        LOG.debug(f"Precompile patterns for {protocol_type}")
         for name, pattern in config['responses'].items():
 #           LOG.debug(f"Precompiling pattern {name}")
@@ -111,14 +112,10 @@ def _set_volume_cmd(protocol_type, zone: int, volume: int) -> bytes:
     volume = int(max(0, min(volume, MAX_VOLUME)))
     return _format(protocol_type, 'set_volume', args = { 'zone': zone, 'volume': volume })
 
-def _pattern_to_dictionary(protocol_type, pattern, source_text: str) -> dict:
+def _pattern_to_dictionary(protocol_type, match, source_text: str) -> dict:
     """Convert the pattern to a dictionary, replacing 0 and 1's with True/False"""
-    result = pattern.match(source_text)
-    if not result:
-        LOG.error(f"Could not parse '{source_text}' with pattern '{pattern}'")
-        return None
-
-    d = result.groupdict()
+    LOG.info(f"Pattern matching {source_text} {match}")
+    d = match.groupdict()
             
     # type convert any pre-configured fields
     # TODO: this could be a lot more efficient LOL
@@ -138,7 +135,8 @@ def _handle_message(protocol_type, text: str):
     to queries as well as streams of messages echoed from a device.
     """
     for pattern_name, pattern in RS232_RESPONSE_PATTERNS[protocol_type].items():
-        match = pattern.match(text)
+        match = re.match(pattern, text)
+        LOG.info(f"Testing {pattern} with {text}")
         if match:
             LOG.info(f"Response for pattern {pattern_name} for text {text}")
             result = _pattern_to_dictionary(protocol_type, match, text)
@@ -287,7 +285,6 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
 
     # merge any serial initialization changes from the client
     serial_config = config['rs232_defaults']
-    LOG.error(f"{amp_series} defaults: {serial_config}")
     if serial_config_overrides:
         serial_config.update( serial_config_overrides )
     
