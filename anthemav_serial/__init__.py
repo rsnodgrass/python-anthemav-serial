@@ -189,7 +189,6 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
             :param skip: number of bytes to skip for end of transmission decoding
             :return: ascii string returned by xantech
             """
-#            print('Sending "%s"', request)
             LOG.debug('Sending "%s"', request)
 
             # clear
@@ -209,7 +208,6 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
                 c = self._port.read(1)
                 if not c:
                     ret = bytes(result)
-#                    print('Result "%s"', result)
                     LOG.info("Serial read result: %s", result)
                     raise serial.SerialTimeoutException(
                         'Connection timed out! Last received bytes {}'.format([hex(a) for a in result]))
@@ -289,6 +287,7 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
 
     # merge any serial initialization changes from the client
     serial_config = config['rs232_defaults']
+    LOG.error(f"{amp_series} defaults: {serial_config}")
     if serial_config_overrides:
         serial_config.update( serial_config_overrides )
     
@@ -349,5 +348,6 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
             return _handle_message(self._protocol_type, response)  # FIXME: could hint at which response pattern to match
 
 
+    LOG.debug(f"About to connect with {serial_config}")
     protocol = await get_async_rs232_protocol(port_url, serial_config, PROTOCOL_CONFIG[protocol_type], loop)
     return AmpControlAsync(protocol_type, protocol)

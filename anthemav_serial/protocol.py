@@ -35,9 +35,7 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
             LOG.debug(f"Port {self._serial_port_url} opened {self._transport}")
 
         def data_received(self, data):
-            LOG.debug(f"Received data from port: {data}")
-            LOG.debug("Received data from port: %s", data.decode('latin-9'))
-            LOG.debug("Received data from port: %s", data.decode('utf-8'))
+            LOG.debug(f"Received from {self._serial_port_url}: {data}")
             asyncio.ensure_future(self._q.put(data), loop=self._loop)
 
         def connection_lost(self, exc):
@@ -46,6 +44,7 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
         async def send(self, request: bytes, skip=0):
             result = bytearray()
             eol = self._config[CONF_EOL]
+            len_eol = len(eol)
 
             await self._connected.wait()
 
@@ -66,8 +65,8 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
                 try:
                     while True:
                         result += await asyncio.wait_for(self._q.get(), self._timeout, loop=self._loop)
-                        LOG.debug("Partial receive %s", bytes(result).decode('ascii'))
-                        if len(result) > skip and result[-len(eol):] == eol:
+#                        LOG.debug("Partial receive %s", bytes(result).decode('ascii'))
+                        if len(result) > skip and result[-len_eol:] == eol:
                             ret = bytes(result)
                             LOG.debug('Received "%s"', ret)
                             return ret.decode('ascii')
