@@ -179,6 +179,8 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
         def __init__(self, protocol_type, port_url, serial_config):
             self._protocol_type = protocol_type
             self._config = PROTOCOL_CONFIG[protocol_type]
+
+            LOG.debug("Creating RS232 connection to {port_url}: {serial_config}")
             self._port = serial.serial_for_url(port_url, **serial_config)
 
         def _process_request(self, request: bytes, skip=0):
