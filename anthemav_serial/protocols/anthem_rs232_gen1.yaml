@@ -3,7 +3,7 @@
 
   multi-seperator: ";"
   command_eol: "\n"
-  timeout = 1.0
+  timeout: 1.0
 
   boolean_fields: [ 'mute', 'power' ]
 
