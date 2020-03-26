@@ -47,7 +47,7 @@
     seek_up:               'T+'
     seek_down:             'T-'
 
-        # Dolby Digital mode dynamic range; 0 = normal; 1 = reduced; 2 = late night
+    # Dolby Digital mode dynamic range; 0 = normal; 1 = reduced; 2 = late night
     set_dynamic_range:     'P{zone}C{range}'
 
     display_message:       'P{zone}x{row}{message}' # row = 1 or 2
@@ -90,7 +90,8 @@
 
 
   responses:
-    zone_status:           "^P(?P<zone>[0-3])S(?P<source>[0-9a-z]+)V(?P<volume>[-0-9\\.]+)M(?P<mute>[01])D(?P<do_not_know>[0-9])"
+    zone_status:           "^P(?P<zone>[0-3])S(?P<source>[0-9a-z]+)V(?P<volume>[-0-9\\.]+)M(?P<mute>[01])(D(?P<do_not_know>[0-9])){0,1}"
+    zone_status_z23:       "^P(?P<zone>[0-3])S(?P<source>[0-9a-z]+)V(?P<volume>[-0-9\\.]+)M(?P<mute>[01])" # zone 2 and 3
     volume_status:         "^P(?P<zone>[0-3])V(?P<volume>[-0-9\\.]+)$"
     power_status:          "^P(?P<zone>[0-3])P(?P<power>[01])$"
     mute_status:           "^P(?P<zone>[0-3])M(?P<mute>[01])$"
