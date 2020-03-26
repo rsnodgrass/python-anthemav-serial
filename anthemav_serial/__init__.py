@@ -106,13 +106,6 @@ def _format(protocol_type: str, format_code: str, args = {}):
     command += str(config['command_eol'])
     return command.format(**args).encode('ascii')
 
-def _set_power_cmd(protocol_type, zone: int, power: bool) -> bytes:
-#    assert zone in _get_config(protocol_type, 'zones')
-    if power:
-        return _format(protocol_type, 'power_on', args = { 'zone': zone })
-    else:
-        return _format(protocol_type, 'power_off', args = { 'zone': zone })
-
 def _set_mute_cmd(protocol_type, zone: int, mute: bool) -> bytes:
 #    assert zone in _get_config(protocol_type, 'zones')
     if mute:
@@ -251,11 +244,20 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
 
         @synchronized
         def set_power(self, zone: int, power: bool):
-            self._process_request(_set_power_cmd(self._protocol_type, zone, power))
+            #    assert zone in _get_config(protocol_type, 'zones')
+            if power:
+                cmd = 'power_on'
+            else:
+                cmd = 'power_off'
+            self.run_command(cmd, args = { 'zone': zone })
 
         @synchronized
         def set_mute(self, zone: int, mute: bool):
-            self._process_request(_set_mute_cmd(self._protocol_type, zone, mute))
+            if mute:
+                cmd = 'mute_on'
+            else:
+                cmd = 'mute_off'
+            self.run_command(cmd, args = { 'zone': zone })
 
         @synchronized
         def set_volume(self, zone: int, volume: int):
@@ -322,27 +324,32 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
         # NOTE: Callers of _run_command() shouldn't have @locked_coro, as the lock isn't re-entrant.
         # This almost could move to the protocol layer as only sending/receiving should be locked.
         @locked_coro
-        async def _run_command(self, command: str, args = {}):
+        async def run_command(self, command: str, args = {}):
             cmd = _format(self._protocol_type, command, args)
             response = await self._protocol.send(cmd)
             LOG.debug(f"Received {cmd} response: {response}")
             return response
 
-        @locked_coro
         async def set_power(self, zone: int, power: bool):
-            await self._protocol.send(_set_power_cmd(self._protocol_type, zone, power))
+            if power:
+                cmd = 'power_on'
+            else:
+                cmd = 'power_off'
+            await self.run_command(cmd, args = { 'zone': zone })
 
-        @locked_coro
         async def set_mute(self, zone: int, mute: bool):
-            await self._protocol.send(_set_mute_cmd(self._protocol_type, zone, mute))
+            if mute:
+                cmd = 'mute_on'
+            else:
+                cmd = 'mute_off'
+            await self.run_command(cmd, args = { 'zone': zone })
 
         @locked_coro
         async def set_volume(self, zone: int, volume: int):
             await self._protocol.send(_set_volume_cmd(self._protocol_type, zone, volume))
 
-        @locked_coro
         async def set_source(self, zone: int, source: int):
-            await self._protocol.send(_set_source_cmd(self._protocol_type, zone, source))
+            await self.run_command('set_source', args = { 'zone': zone, 'source': source })
 
         async def volume_up(self, zone: int):
             await self.run_command('volume_up', args = { 'zone': zone })
