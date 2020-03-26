@@ -106,28 +106,10 @@ def _format(protocol_type: str, format_code: str, args = {}):
     command += str(config['command_eol'])
     return command.format(**args).encode('ascii')
 
-def _set_mute_cmd(protocol_type, zone: int, mute: bool) -> bytes:
-#    assert zone in _get_config(protocol_type, 'zones')
-    if mute:
-        return _format(protocol_type, 'mute_on', args = { 'zone': zone })
-    else:
-        return _format(protocol_type, 'mute_off', args = { 'zone': zone })
-
 def _set_volume_cmd(protocol_type, zone: int, volume: int) -> bytes:
 #    assert zone in _get_config(protocol_type, 'zones')
     volume = int(max(0, min(volume, MAX_VOLUME)))
     return _format(protocol_type, 'set_volume', args = { 'zone': zone, 'volume': volume })
-
-def _volume_up_cmd(protocol_type, zone: int) -> bytes:
-    return _format(protocol_type, 'volume_up', args = { 'zone': zone })
-
-def _volume_down_cmd(protocol_type, zone: int) -> bytes:
-    return _format(protocol_type, 'volume_down', args = { 'zone': zone })
-
-def _set_source_cmd(protocol_type, zone: int, source: int) -> bytes:
-#    assert zone in _get_config(protocol_type, 'zones')
-#    assert source in _get_config(protocol_type, 'sources')
-    return _format(protocol_type, 'set_source', args = { 'zone': zone, 'source': source })
 
 def _pattern_to_dictionary(protocol_type, pattern, source_text: str) -> dict:
     """Convert the pattern to a dictionary, replacing 0 and 1's with True/False"""
@@ -265,7 +247,9 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
 
         @synchronized
         def set_source(self, zone: int, source: int):
-            self._process_request(_set_source_cmd(self._protocol_type, zone, source))
+            #    assert zone in _get_config(protocol_type, 'zones')
+            #    assert source in _get_config(protocol_type, 'sources')
+            self.run_command('set_source', args = { 'zone': zone, 'source': source })
 
         @synchronized
         def volume_up(self, zone: int):
