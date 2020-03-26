@@ -3,6 +3,7 @@ import logging
 import re
 import os
 import yaml
+import time
 import serial
 import asyncio
 import functools
@@ -12,6 +13,9 @@ from threading import RLock
 
 from .config import (DEVICE_CONFIG, PROTOCOL_CONFIG, get_with_log)
 from .protocol import get_async_rs232_protocol
+
+# FIXME:
+#  - we may want to throttle the RS232 messages per-second, since rapid sending of commands can cause timeouts
 
 # FIXME:
 # The Anthem has the ability to set a "transmit" status on its RS232 port, which, acc'd the documentation, 
@@ -262,6 +266,14 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
             """Return a dictionary containing status details for the zone"""
             response = self.run_command('zone_status', { 'zone': zone })
             LOG.warning(f"Received zone {zone} status response: {response}")
+
+            if "Main Off" in response:
+                return { "zone": 1, "power": False }
+            elif response == "Zone2 Off":
+                return { "zone": 2, "power": False }
+            elif response == "Zone3 Off":
+                return { "zone": 3, "power": False }
+
             return _handle_message(self._protocol_type, response)
 
     return AmpControlSync(protocol_type, port_url, serial_config)
@@ -302,6 +314,7 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
         def __init__(self, protocol_type, protocol):
             self._protocol_type = protocol_type            
             self._protocol = protocol
+            self._last_send = time.time() - 1
 
         # NOTE: Callers of _run_command() shouldn't have @locked_coro, as the lock isn't re-entrant.
         # This almost could move to the protocol layer as only sending/receiving should be locked.
@@ -342,6 +355,14 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
         async def zone_status(self, zone: int) -> dict:
             """Return a dictionary containing status details for the zone"""
             response = await self.run_command('zone_status', { 'zone': zone })
+
+            if "Main Off" in response:
+                return { "zone": 1, "power": False, "mute": True }
+            elif response == "Zone2 Off":
+                return { "zone": 2, "power": False, "mute": True }
+            elif response == "Zone3 Off":
+                return { "zone": 3, "power": False, "mute": True }
+
             return _handle_message(self._protocol_type, response)  # FIXME: could hint at which response pattern to match
 
 

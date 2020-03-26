@@ -31,18 +31,19 @@ config = {}
 if args.baud:
     config['baudrate'] = args.baud
 
-async def main(loop):
-    zone = 1
 
+async def main(loop):
     amp = await get_async_amp_controller(args.series, args.tty, loop, serial_config_overrides=config)
     pp.pprint(amp)
 
-    # show amp status
-    result = await amp.zone_status(zone)
-    pp.pprint(result)
+    await amp.set_power(2, True)
 
-#    zone = 1
-#    await amp.set_power(zone, True)
+    # show amp status
+    for zone in range(1, 4):
+        result = await amp.zone_status(zone)
+        pp.pprint(result)
+
+        await amp.set_power(zone, False)
 
 
 loop = asyncio.get_event_loop()

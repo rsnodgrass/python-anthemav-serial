@@ -3,6 +3,8 @@
 
   command_eol: "\n"
   timeout: 1.0
+  min_time_between_commands: 0.250  # 250ms
+  delay_after_power_on: 10.0  # how many seconds after powering on the device until RS232 commands can be sent
 
   boolean_fields:   [ 'mute', 'power' ]
 

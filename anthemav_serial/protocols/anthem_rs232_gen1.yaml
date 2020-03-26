@@ -3,7 +3,12 @@
 
   multi-seperator: ";"
   command_eol: "\n"
-  timeout: 1.0
+  timeout: 2.0
+  min_time_between_commands: 0.250  # 250ms
+
+  # how many seconds after powering on the device until RS232 commands can be sent
+  # this could be solved like the IP anthemav library did it: looping every 1 second and querying status before allowing new commands to be sent
+  delay_after_power_on: 12.0 
 
   boolean_fields: [ 'mute', 'power' ]
 
