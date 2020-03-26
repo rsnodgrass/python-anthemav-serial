@@ -35,18 +35,18 @@
 
     set_anthem_logic_mode: 'Z1ALM{mode}'
     # 01 -- Anthem Logic Movie
-		# 02 -- Anthem Logic Music
-		# 03 -- PLII Movie
-		# 04 -- PLII Music
-		# 05 -- Neo:6 Cinema
-		# 06 -- Neo:6 Music
-		# 07 -- All Channel Stereo
-		# 08 -- All Channel Mono
-		# 09 -- Mono
-		# 10 -- Mono Academy
-		# 11 -- Mono L
-		# 12 -- Mono R
-		# 13 -- High Blend
+    # 02 -- Anthem Logic Music
+    # 03 -- PLII Movie
+    # 04 -- PLII Music
+    # 05 -- Neo:6 Cinema
+    # 06 -- Neo:6 Music
+    # 07 -- All Channel Stereo
+    # 08 -- All Channel Mono
+    # 09 -- Mono
+    # 10 -- Mono Academy
+    # 11 -- Mono L
+    # 12 -- Mono R
+    # 13 -- High Blend
 
     set_audio_format: 'Z{zone}AIF{format}'
     # '0': 'No audio', '1': 'Analog', '2': 'PCM', '3': 'Dolby', '4': 'DSD', '5': 'DTS', '6': 'Atmos'
