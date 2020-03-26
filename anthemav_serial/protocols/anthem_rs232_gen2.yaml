@@ -1,6 +1,9 @@
 - protocol: anthem_rs232_gen2
   name: "Anthem RS232 Gen2"
 
+  command_eol: "\n"
+  timeout = 1.0
+
   boolean_fields:   [ 'mute', 'power' ]
 
   commands:

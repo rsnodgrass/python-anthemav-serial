@@ -20,6 +20,9 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
             self._loop = loop
 
             self._timeout = self._config.get('timeout')
+            if self._timeout is None:
+                self._timeout = 1.0 # default to 1 second if None
+            LOG.info("Timeout set to {self._timeout}")
 
             self._lock = asyncio.Lock()
             self._transport = None
@@ -32,7 +35,7 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
             LOG.debug(f"Port {self._serial_port_url} opened {self._transport}")
 
         def data_received(self, data):
-            LOG.debug("Received data from port: %s", data)
+            LOG.debug("Received data from port: %s", data.decode('ascii'))
             asyncio.ensure_future(self._q.put(data), loop=self._loop)
 
         def connection_lost(self, exc):
@@ -53,7 +56,7 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
                     self._q.get_nowait()
 
                 # send the request
-                LOG.debug("Sending rs232 data %s", request)
+                LOG.debug("Sending RS232 data %s", request)
                 self._transport.write(request)
 
                 # read the response
@@ -61,6 +64,7 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
                 try:
                     while True:
                         result += await asyncio.wait_for(self._q.get(), self._timeout, loop=self._loop)
+                        LOG.debug("Partial receive %s", bytes(result).decode('ascii'))
                         if len(result) > skip and result[-len(eol):] == eol:
                             ret = bytes(result)
                             LOG.debug('Received "%s"', ret)
