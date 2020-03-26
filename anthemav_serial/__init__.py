@@ -140,12 +140,12 @@ def _handle_message(protocol_type, text: str):
     """
     for pattern_name, pattern in RS232_RESPONSE_PATTERNS[protocol_type].items():
         match = re.match(pattern, text)
-        LOG.info(f"Testing {pattern} with {text}")
         if match:
             LOG.info(f"Response for pattern {pattern_name} for text {text}")
             result = _pattern_to_dictionary(protocol_type, match, text)
             LOG.info(f"Parsed response text {text}: {result}")
             return result
+    LOG.info(f"Found no pattern matching response: {text}")
     return None
 
 def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
@@ -274,7 +274,9 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
             elif response == "Zone3 Off":
                 return { "zone": 3, "power": False }
 
-            return _handle_message(self._protocol_type, response)
+            result = _handle_message(self._protocol_type, response)
+            result['power'] = True # must manually inject power status if on, since this is implied by a response
+            return result
 
     return AmpControlSync(protocol_type, port_url, serial_config)
 
@@ -357,14 +359,15 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
             response = await self.run_command('zone_status', { 'zone': zone })
 
             if "Main Off" in response:
-                return { "zone": 1, "power": False, "mute": True }
+                return { "zone": 1, "power": False }
             elif response == "Zone2 Off":
-                return { "zone": 2, "power": False, "mute": True }
+                return { "zone": 2, "power": False }
             elif response == "Zone3 Off":
-                return { "zone": 3, "power": False, "mute": True }
+                return { "zone": 3, "power": False }
 
-            return _handle_message(self._protocol_type, response)  # FIXME: could hint at which response pattern to match
-
+            result = _handle_message(self._protocol_type, response)  # FIXME: could hint at which response pattern to match
+            result['power'] = True # must manually inject power status if on, since this is implied by a response
+            return result
 
     LOG.debug(f"About to connect with {serial_config}")
     protocol = await get_async_rs232_protocol(port_url, serial_config, PROTOCOL_CONFIG[protocol_type], loop)
