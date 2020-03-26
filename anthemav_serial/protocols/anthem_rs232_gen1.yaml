@@ -75,6 +75,15 @@
     lock_front_panel:      'FPL1'
     unlock_front_panel:    'FPL0'
 
+    save_current_settings:       'SfSC' # Current settings are used when applying power to the unit.
+    save_user_settings:          'SfSU'
+    restore_user_settings:       'SfLU
+    save_installer_settings:     'SfSI'
+    restore_installer_settings:  'SfLI'
+
+    set_onscreen_display:        'SOS{on_off}'  # 0=off, 1=on
+
+
   responses:
     zone_status:           "P(?P<zone>[0-3])S(?P<source>[0-9a-z])V(?P<volume>[0-9\\.]+)M(?P<mute>[01])"
     volume_status:         "P(?P<zone>[0-3])V(?P<volume>[0-9\\.]+)"
