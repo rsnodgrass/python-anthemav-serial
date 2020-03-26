@@ -9,7 +9,7 @@ LOG = logging.getLogger(__name__)
 
 CONF_EOL = 'command_eol'
 
-async def get_rs232_async_protocol(serial_port_url, serial_config, protocol_config, loop):
+async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_config, loop):
 
     class RS232ControlProtocol(asyncio.Protocol):
         def __init__(self, serial_port_url, protocol_config, loop):
@@ -32,24 +32,21 @@ async def get_rs232_async_protocol(serial_port_url, serial_config, protocol_conf
             LOG.debug(f"Port {self._serial_port_url} opened {self._transport}")
 
         def data_received(self, data):
+            LOG.debug("Received data from port: {data}")
             asyncio.ensure_future(self._q.put(data), loop=self._loop)
 
         def connection_lost(self, exc):
-            LOG.info(f"Port {self._serial_port_url} closed")
+            LOG.debug(f"Port {self._serial_port_url} closed")
 
         async def send(self, request: bytes, skip=0):
-            await self._connected.wait()
             result = bytearray()
-
-            # FIXME: what about the multi-line separator for a single send?
             eol = self._config[CONF_EOL]
-            if eol == None:
-                eol = '\n'
-            len_eol = len(eol)
+
+            await self._connected.wait()
 
             # only one write/read at a time
             with (await self._lock):
-                # clear all waiting to be received data before sending the command
+                # clear all buffers of any data waiting to be read before sending the request
                 self._transport.serial.reset_output_buffer()
                 self._transport.serial.reset_input_buffer()
                 while not self._q.empty():
@@ -62,7 +59,7 @@ async def get_rs232_async_protocol(serial_port_url, serial_config, protocol_conf
                 try:
                     while True:
                         result += await asyncio.wait_for(self._q.get(), self._timeout, loop=self._loop)
-                        if len(result) > skip and result[-len_eol:] == eol:
+                        if len(result) > skip and result[-len(eol):] == eol:
                             ret = bytes(result)
                             LOG.debug('Received "%s"', ret)
                             return ret.decode('ascii')

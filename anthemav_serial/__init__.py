@@ -11,7 +11,7 @@ from functools import wraps
 from threading import RLock
 
 from .config import (DEVICE_CONFIG, PROTOCOL_CONFIG, get_with_log)
-from .protocol import get_rs232_async_protocol
+from .protocol import get_async_rs232_protocol
 
 # FIXME:
 # The Anthem has the ability to set a "transmit" status on its RS232 port, which, acc'd the documentation, 
@@ -212,7 +212,7 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
             :param skip: number of bytes to skip for end of transmission decoding
             :return: ascii string returned by xantech
             """
-            print('Sending "%s"', request)
+#            print('Sending "%s"', request)
             LOG.debug('Sending "%s"', request)
 
             # clear
@@ -307,7 +307,7 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
     lock = asyncio.Lock()
 
     def locked_coro(coro):
-        """While this is asynchronous, ensure only a single, ordered command is sent to RS232 at a time"""
+        """While this is asynchronous, ensure only a single, ordered command is sent to RS232 at a time (non-reentrant lock)"""
         @wraps(coro)
         async def wrapper(*args, **kwargs):
             with (await lock):
@@ -319,10 +319,15 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
             self._protocol_type = protocol_type            
             self._protocol = protocol
 
+        # NOTE: Callers of _run_command() shouldn't have @locked_coro, as the lock isn't re-entrant.
+        # This almost could move to the protocol layer as only sending/receiving should be locked.
         @locked_coro
-        async def run_command(self, command: str, args = {}):
-            await self._protocol.send( _format(self._protocol_type, command, args) )
-            
+        async def _run_command(self, command: str, args = {}):
+            cmd = _format(self._protocol_type, command, args)
+            response = await self._protocol.send(cmd)
+            LOG.debug(f"Received {cmd} response: {response}")
+            return response
+
         @locked_coro
         async def set_power(self, zone: int, power: bool):
             await self._protocol.send(_set_power_cmd(self._protocol_type, zone, power))
@@ -339,21 +344,17 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
         async def set_source(self, zone: int, source: int):
             await self._protocol.send(_set_source_cmd(self._protocol_type, zone, source))
 
-        @locked_coro
         async def volume_up(self, zone: int):
             await self.run_command('volume_up', args = { 'zone': zone })
 
-        @locked_coro
         async def volume_down(self, zone: int):
             await self.run_command('volume_down', args = { 'zone': zone })
 
-        @locked_coro
         async def zone_status(self, zone: int) -> dict:
             """Return a dictionary containing status details for the zone"""
             response = await self.run_command('zone_status', { 'zone': zone })
-            LOG.warning(f"Received zone {zone} status response: {response}")
-            return _handle_message(self._protocol_type, response)  # FIXME: could give a hint for which response pattern to match
+            return _handle_message(self._protocol_type, response)  # FIXME: could hint at which response pattern to match
 
 
-    protocol = await get_rs232_async_protocol(port_url, serial_config, PROTOCOL_CONFIG[protocol_type], loop)
+    protocol = await get_async_rs232_protocol(port_url, serial_config, PROTOCOL_CONFIG[protocol_type], loop)
     return AmpControlAsync(protocol_type, protocol)
