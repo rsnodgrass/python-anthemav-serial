@@ -1,9 +1,9 @@
-\1;95;0c#!/usr/bin/env python
+#!/usr/bin/env python
 
 import os
 import sys
 
-VERSION = '0.2.2'
+VERSION = '0.2.3'
 
 try:
     from setuptools import setup

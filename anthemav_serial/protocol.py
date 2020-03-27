@@ -45,7 +45,7 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
         def connection_lost(self, exc):
             LOG.debug(f"Port {self._serial_port_url} closed")
 
-        async def send(self, request: bytes, skip=0):
+        async def send(self, request: bytes, wait_for_reply=True, skip=0):
             data = bytearray()
             eol = self._config[CONF_EOL].encode('ascii')
             min_time_between_commands = self._config[CONF_THROTTLE_RATE]
@@ -81,6 +81,9 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
                 # for many seconds after initial powering up
                 if request in [ "P1P1\n", "P2P1\n", "P1P3\n" ]:
                     self._last_send = time.time() + self._config['delay_after_power_on']
+
+                if not wait_for_reply:
+                    return
 
                 # read the response
                 try:

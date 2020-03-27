@@ -50,7 +50,7 @@ class AmpControlBase(object):
     AmpliferControlBase amplifier interface
     """
 
-    def run_command(self, command: str, args = {}):
+    def send_command(self, command: str, args = {}, wait_for_reply=True):
         """
         Execute command with args
         """
@@ -185,7 +185,7 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
             LOG.debug(f"Creating RS232 connection to {port_url}: {serial_config}")
             self._port = serial.serial_for_url(port_url, **serial_config)
 
-        def _process_request(self, request: bytes, skip=0):
+        def _send_request(self, request: bytes, wait_for_reply, skip=0):
             """
             :param request: request that is sent to the xantech
             :param skip: number of bytes to skip for end of transmission decoding
@@ -203,6 +203,9 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
 
             eol = self._config['command_eol']
             len_eol = len(eol)
+
+            if not wait_for_reply:
+                return
 
             # receive
             result = bytearray()
@@ -222,9 +225,9 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
             return ret.decode('ascii')
 
         @synchronized
-        def run_command(self, command: str, args = {}):
+        def send_command(self, command: str, args = {}, wait_for_reply=True):
             cmd = _format(self._protocol_type, command, args)
-            return self._process_request(cmd)
+            return self._send_request(cmd, wait_for_reply)
 
         @synchronized
         def set_power(self, zone: int, power: bool):
@@ -233,7 +236,7 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
                 cmd = 'power_on'
             else:
                 cmd = 'power_off'
-            self.run_command(cmd, args = { 'zone': zone })
+            self.send_command(cmd, args = { 'zone': zone }, wait_for_reply=False)
 
         @synchronized
         def set_mute(self, zone: int, mute: bool):
@@ -241,38 +244,39 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
                 cmd = 'mute_on'
             else:
                 cmd = 'mute_off'
-            self.run_command(cmd, args = { 'zone': zone })
+            self.send_command(cmd, args = { 'zone': zone }, wait_for_reply=False)
 
         @synchronized
         def set_volume(self, zone: int, volume: int):
-            self._process_request(_set_volume_cmd(self._protocol_type, zone, volume))
+            request = _set_volume_cmd(self._protocol_type, zone, volume)
+            self._send_request(request, False)
 
         @synchronized
         def set_source(self, zone: int, source: int):
             #    assert zone in _get_config(protocol_type, 'zones')
             #    assert source in _get_config(protocol_type, 'sources')
-            self.run_command('set_source', args = { 'zone': zone, 'source': source })
+            self.send_command('set_source', args = { 'zone': zone, 'source': source }, wait_for_reply=False)
 
         @synchronized
         def volume_up(self, zone: int):
-            self.run_command('volume_up', args = { 'zone': zone })
+            self.send_command('volume_up', args = { 'zone': zone }, wait_for_reply=False)
 
         @synchronized
         def volume_down(self, zone: int):
-            self.run_command('volume_down', args = { 'zone': zone })
+            self.send_command('volume_down', args = { 'zone': zone }, wait_for_reply=False)
 
         @synchronized
         def zone_status(self, zone: int) -> dict:
             """Return a dictionary containing status details for the zone"""
-            response = self.run_command('zone_status', { 'zone': zone })
-            LOG.warning(f"Received zone {zone} status response: {response}")
+            response = self.send_command('zone_status', { 'zone': zone })
+            LOG.debug("Received zone %d status response %s", zone, response)
 
             if "Main Off" in response:
-                return { "zone": 1, "power": False }
+                return { "zone": 1, "power": False, "mute": True, "volume": 0 }
             elif response == "Zone2 Off":
-                return { "zone": 2, "power": False }
+                return { "zone": 2, "power": False, "mute": True, "volume": 0 }
             elif response == "Zone3 Off":
-                return { "zone": 3, "power": False }
+                return { "zone": 3, "power": False, "mute": True, "volume": 0 }
 
             result = _handle_message(self._protocol_type, response)
             result['power'] = True # must manually inject power status if on, since this is implied by a response
@@ -318,12 +322,12 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
             self._protocol = protocol
             self._last_send = time.time() - 1
 
-        # NOTE: Callers of _run_command() shouldn't have @locked_coro, as the lock isn't re-entrant.
+        # NOTE: Callers of _send_command() shouldn't have @locked_coro, as the lock isn't re-entrant.
         # This almost could move to the protocol layer as only sending/receiving should be locked.
         @locked_coro
-        async def run_command(self, command: str, args = {}):
+        async def send_command(self, command: str, args = {}, wait_for_reply=True):
             cmd = _format(self._protocol_type, command, args)
-            response = await self._protocol.send(cmd)
+            response = await self._protocol.send(cmd, wait_for_reply=wait_for_reply)
             LOG.debug(f"Received {cmd} response: {response}")
             return response
 
@@ -332,31 +336,32 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
                 cmd = 'power_on'
             else:
                 cmd = 'power_off'
-            await self.run_command(cmd, args = { 'zone': zone })
+            await self.send_command(cmd, args = { 'zone': zone }, wait_for_reply=False)
 
         async def set_mute(self, zone: int, mute: bool):
             if mute:
                 cmd = 'mute_on'
             else:
                 cmd = 'mute_off'
-            await self.run_command(cmd, args = { 'zone': zone })
+            await self.send_command(cmd, args = { 'zone': zone }, wait_for_reply=False)
 
         @locked_coro
         async def set_volume(self, zone: int, volume: int):
-            await self._protocol.send(_set_volume_cmd(self._protocol_type, zone, volume))
+            request = _set_volume_cmd(self._protocol_type, zone, volume)
+            await self._protocol.send(request, wait_for_reply=False)
 
         async def set_source(self, zone: int, source: int):
-            await self.run_command('set_source', args = { 'zone': zone, 'source': source })
+            await self.send_command('set_source', args = { 'zone': zone, 'source': source }, wait_for_reply=False)
 
         async def volume_up(self, zone: int):
-            await self.run_command('volume_up', args = { 'zone': zone })
+            await self.send_command('volume_up', args = { 'zone': zone }, wait_for_reply=False)
 
         async def volume_down(self, zone: int):
-            await self.run_command('volume_down', args = { 'zone': zone })
+            await self.send_command('volume_down', args = { 'zone': zone }, wait_for_reply=False)
 
         async def zone_status(self, zone: int) -> dict:
             """Return a dictionary containing status details for the zone"""
-            response = await self.run_command('zone_status', { 'zone': zone })
+            response = await self.send_command('zone_status', { 'zone': zone })
 
             if "Main Off" in response:
                 return { "zone": 1, "power": False }
