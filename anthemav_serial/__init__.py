@@ -50,6 +50,12 @@ class AmpControlBase(object):
     AmpliferControlBase amplifier interface
     """
 
+    def is_connected(self):
+        """
+        Returns True if the amplifier is connected and responding
+        """
+        raise NotImplemented()
+    
     def send_command(self, command: str, args = {}, wait_for_reply=True):
         """
         Execute command with args
@@ -225,6 +231,15 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
             return ret.decode('ascii')
 
         @synchronized
+        def is_connected(self):
+            version = self.send_command('query_version')
+            if version:
+                # returns: unit type, version, build date   (AVM 2,Version 1.00,Jun 26 2000)
+                LOG.debug(f"amp.is_connected returned {version}")
+                return version.contain('(')
+            return False
+
+        @synchronized
         def send_command(self, command: str, args = {}, wait_for_reply=True):
             cmd = _format(self._protocol_type, command, args)
             return self._send_request(cmd, wait_for_reply)
@@ -330,6 +345,14 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
             response = await self._protocol.send(cmd, wait_for_reply=wait_for_reply)
             LOG.debug(f"Received {cmd} response: {response}")
             return response
+
+        async def is_connected(self):
+            version = await self.send_command('query_version')
+            if version:
+                # returns: unit type, version, build date   (AVM 2,Version 1.00,Jun 26 2000)
+                LOG.debug(f"amp.is_connected returned {version}")
+                return version.contain('(')
+            return False
 
         async def set_power(self, zone: int, power: bool):
             if power:
