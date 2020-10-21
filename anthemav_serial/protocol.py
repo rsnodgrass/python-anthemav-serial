@@ -13,6 +13,18 @@ CONF_THROTTLE_RATE = 'min_time_between_commands'
 
 async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_config, loop):
 
+    lock = asyncio.Lock()
+
+    def locked_coro(coro):
+        """While this is asynchronous, ensure only a single, ordered command is sent to RS232 at a time (non-reentrant lock)"""
+        @wraps(coro)
+        async def wrapper(*args, **kwargs):
+            LOG.debug("Waiting on coro lock: %s %s", args, kwargs)
+            with (await lock):
+                LOG.debug("Lock acquired! %s %s", args, kwargs)
+                return (await coro(*args, **kwargs))
+        return wrapper
+
     class RS232ControlProtocol(asyncio.Protocol):
         def __init__(self, serial_port_url, protocol_config, loop):
             super().__init__()
@@ -45,6 +57,7 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
         def connection_lost(self, exc):
             LOG.debug(f"Port {self._serial_port_url} closed")
 
+#        @locked_coro
         async def send(self, request: bytes, wait_for_reply=True, skip=0):
             data = bytearray()
             eol = self._config[CONF_EOL].encode('ascii')
@@ -65,7 +78,7 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
 
                 if delta_since_last_send < 0:
                     delay = -1 * delta_since_last_send
-                    LOG.debug(f"Sleeping {delay} seconds until sending another RS232 request as {self._name} is powering up")
+                    LOG.debug(f"Sleeping {delay} seconds until sending another RS232 request as device is powering up")
                     await asyncio.sleep(delay)
 
                 elif delta_since_last_send < min_time_between_commands:

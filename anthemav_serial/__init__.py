@@ -11,7 +11,7 @@ import functools
 from functools import wraps
 from threading import RLock
 
-from .config import (DEVICE_CONFIG, PROTOCOL_CONFIG, get_with_log)
+from .config import (DEVICE_CONFIG, PROTOCOL_CONFIG, RS232_RESPONSE_PATTERNS, pattern_to_dictionary, get_with_log)
 from .protocol import get_async_rs232_protocol
 
 # FIXME:
@@ -30,20 +30,11 @@ LOG = logging.getLogger(__name__)
 # FIXME: range or explicit volume values should be configered per amp series in yaml
 MAX_VOLUME = 100
 
-# cached dictionary pattern matches for all responses for each protocol
-def _precompile_response_patterns():
-    """Precompile all response patterns"""
-    for protocol_type, config in PROTOCOL_CONFIG.items():
-        patterns = {}
-
-#        LOG.debug(f"Precompile patterns for {protocol_type}")
-        for name, pattern in config['responses'].items():
-#           LOG.debug(f"Precompiling pattern {name}")
-            patterns[name] = re.compile(pattern)
-        RS232_RESPONSE_PATTERNS[protocol_type] = patterns
-
-RS232_RESPONSE_PATTERNS = {}
-_precompile_response_patterns()
+MUTE_KEY = 'mute'
+VOLUME_KEY = 'volume'
+POWER_KEY = 'power'
+SOURCE_KEY = 'source'
+ZONE_KEY = 'zone'
 
 class AmpControlBase(object):
     """
@@ -120,24 +111,7 @@ def _format(protocol_type: str, format_code: str, args = {}):
 def _set_volume_cmd(protocol_type, zone: int, volume: int) -> bytes:
 #    assert zone in _get_config(protocol_type, 'zones')
     volume = int(max(0, min(volume, MAX_VOLUME)))
-    return _format(protocol_type, 'set_volume', args = { 'zone': zone, 'volume': volume })
-
-def _pattern_to_dictionary(protocol_type, match, source_text: str) -> dict:
-    """Convert the pattern to a dictionary, replacing 0 and 1's with True/False"""
-    LOG.info(f"Pattern matching {source_text} {match}")
-    d = match.groupdict()
-            
-    # type convert any pre-configured fields
-    # TODO: this could be a lot more efficient LOL
-    boolean_fields = PROTOCOL_CONFIG[protocol_type].get('boolean_fields')
-    for k, v in d.items():
-        if k in boolean_fields:
-            # replace and 0 or 1 with True or False
-            if v == '0':
-                d[k] = False
-            elif v == '1':
-                d[k] = True
-    return d
+    return _format(protocol_type, 'set_volume', args = { ZONE_KEY: zone, VOLUME_KEY: volume })
 
 def _handle_message(protocol_type, text: str):
     """
@@ -148,7 +122,7 @@ def _handle_message(protocol_type, text: str):
         match = re.match(pattern, text)
         if match:
             LOG.info(f"Response for pattern {pattern_name} for text {text}")
-            result = _pattern_to_dictionary(protocol_type, match, text)
+            result = pattern_to_dictionary(protocol_type, match, text)
             LOG.info(f"Parsed response text {text}: {result}")
             return result
     LOG.info(f"Found no pattern matching response: {text}")
@@ -251,7 +225,7 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
                 cmd = 'power_on'
             else:
                 cmd = 'power_off'
-            self.send_command(cmd, args = { 'zone': zone }, wait_for_reply=False)
+            self.send_command(cmd, args = { ZONE_KEY: zone }, wait_for_reply=False)
 
         @synchronized
         def set_mute(self, zone: int, mute: bool):
@@ -259,7 +233,7 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
                 cmd = 'mute_on'
             else:
                 cmd = 'mute_off'
-            self.send_command(cmd, args = { 'zone': zone }, wait_for_reply=False)
+            self.send_command(cmd, args = { ZONE_KEY: zone }, wait_for_reply=False)
 
         @synchronized
         def set_volume(self, zone: int, volume: int):
@@ -270,33 +244,33 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
         def set_source(self, zone: int, source: int):
             #    assert zone in _get_config(protocol_type, 'zones')
             #    assert source in _get_config(protocol_type, 'sources')
-            self.send_command('set_source', args = { 'zone': zone, 'source': source }, wait_for_reply=False)
+            self.send_command('set_source', args = { ZONE_KEY: zone, SOURCE_KEY: source }, wait_for_reply=False)
 
         @synchronized
         def volume_up(self, zone: int):
-            self.send_command('volume_up', args = { 'zone': zone }, wait_for_reply=False)
+            self.send_command('volume_up', args = { ZONE_KEY: zone }, wait_for_reply=False)
 
         @synchronized
         def volume_down(self, zone: int):
-            self.send_command('volume_down', args = { 'zone': zone }, wait_for_reply=False)
+            self.send_command('volume_down', args = { ZONE_KEY: zone }, wait_for_reply=False)
 
         @synchronized
         def zone_status(self, zone: int) -> dict:
             """Return a dictionary containing status details for the zone"""
-            response = self.send_command('zone_status', { 'zone': zone })
+            response = self.send_command('zone_status', { ZONE_KEY: zone })
             LOG.debug("Received zone %d status response %s", zone, response)
 
             if "Main Off" in response:
-                return { "zone": 1, "power": False, "mute": True, "volume": 0 }
+                return { ZONE_KEY: 1, POWER_KEY: False, MUTE_KEY: True, VOLUME_KEY: 0 }
             elif response == "Zone2 Off":
-                return { "zone": 2, "power": False, "mute": True, "volume": 0 }
+                return { ZONE_KEY: 2, POWER_KEY: False, MUTE_KEY: True, VOLUME_KEY: 0 }
             elif response == "Zone3 Off":
-                return { "zone": 3, "power": False, "mute": True, "volume": 0 }
+                return { ZONE_KEY: 3, POWER_KEY: False, MUTE_KEY: True, VOLUME_KEY: 0 }
 
             result = _handle_message(self._protocol_type, response)
-            result['power'] = True # must manually inject power status if on, since this is implied by a response
+            result[POWER_KEY] = True # must manually inject power status if on, since this is implied by a response
             return result
-
+        
     return AmpControlSync(protocol_type, port_url, serial_config)
 
 
@@ -327,8 +301,10 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
         """While this is asynchronous, ensure only a single, ordered command is sent to RS232 at a time (non-reentrant lock)"""
         @wraps(coro)
         async def wrapper(*args, **kwargs):
+            LOG.debug("Waiting on coro lock: %s %s", args, kwargs)
             with (await lock):
-                return (await coro(*args, **kwargs))
+               LOG.debug("Lock acquired! %s %s", args, kwargs)
+               return (await coro(*args, **kwargs))
         return wrapper
 
     class AmpControlAsync(AmpControlBase):
@@ -342,6 +318,7 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
         @locked_coro
         async def send_command(self, command: str, args = {}, wait_for_reply=True):
             cmd = _format(self._protocol_type, command, args)
+            LOG.debug("Sending command %s", cmd)
             response = await self._protocol.send(cmd, wait_for_reply=wait_for_reply)
             LOG.debug(f"Received {cmd} response: {response}")
             return response
@@ -359,14 +336,14 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
                 cmd = 'power_on'
             else:
                 cmd = 'power_off'
-            await self.send_command(cmd, args = { 'zone': zone }, wait_for_reply=False)
+            await self.send_command(cmd, args = { ZONE_KEY: zone }, wait_for_reply=False)
 
         async def set_mute(self, zone: int, mute: bool):
             if mute:
                 cmd = 'mute_on'
             else:
                 cmd = 'mute_off'
-            await self.send_command(cmd, args = { 'zone': zone }, wait_for_reply=False)
+            await self.send_command(cmd, args = { ZONE_KEY: zone }, wait_for_reply=False)
 
         @locked_coro
         async def set_volume(self, zone: int, volume: int):
@@ -374,29 +351,31 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
             await self._protocol.send(request, wait_for_reply=False)
 
         async def set_source(self, zone: int, source: int):
-            await self.send_command('set_source', args = { 'zone': zone, 'source': source }, wait_for_reply=False)
+            await self.send_command('set_source', args = { ZONE_KEY: zone, SOURCE_KEY: source }, wait_for_reply=False)
 
         async def volume_up(self, zone: int):
-            await self.send_command('volume_up', args = { 'zone': zone }, wait_for_reply=False)
+            await self.send_command('volume_up', args = { ZONE_KEY: zone }, wait_for_reply=False)
 
         async def volume_down(self, zone: int):
-            await self.send_command('volume_down', args = { 'zone': zone }, wait_for_reply=False)
+            await self.send_command('volume_down', args = { ZONE_KEY: zone }, wait_for_reply=False)
 
         async def zone_status(self, zone: int) -> dict:
             """Return a dictionary containing status details for the zone"""
-            response = await self.send_command('zone_status', { 'zone': zone })
+            response = await self.send_command('zone_status', { ZONE_KEY: zone })
 
             if "Main Off" in response:
-                return { "zone": 1, "power": False }
+                return { ZONE_KEY: 1, POWER_KEY: False }
             elif response == "Zone2 Off":
-                return { "zone": 2, "power": False }
+                return { ZONE_KEY: 2, POWER_KEY: False }
             elif response == "Zone3 Off":
-                return { "zone": 3, "power": False }
+                return { ZONE_KEY: 3, POWER_KEY: False }
 
-            result = _handle_message(self._protocol_type, response)  # FIXME: could hint at which response pattern to match
-            result['power'] = True # must manually inject power status if on, since this is implied by a response
+            result = _handle_message(self._protocol_type, response)  # FIXME: hint at which response pattern to match
+            result[POWER_KEY] = True # manually inject power status, since this is implied by this response
             return result
 
+
+        
     LOG.debug(f"About to connect with {serial_config}")
     protocol = await get_async_rs232_protocol(port_url, serial_config, PROTOCOL_CONFIG[protocol_type], loop)
     return AmpControlAsync(protocol_type, protocol)
