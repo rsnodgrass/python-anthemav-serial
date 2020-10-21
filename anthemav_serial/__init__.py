@@ -13,6 +13,7 @@ from threading import RLock
 
 from .config import (DEVICE_CONFIG, PROTOCOL_CONFIG, RS232_RESPONSE_PATTERNS, pattern_to_dictionary, get_with_log)
 from .protocol import get_async_rs232_protocol
+from .const import MUTE_KEY, VOLUME_KEY, POWER_KEY, SOURCE_KEY, ZONE_KEY
 
 # FIXME:
 #  - we may want to throttle the RS232 messages per-second, since rapid sending of commands can cause timeouts
@@ -29,12 +30,6 @@ LOG = logging.getLogger(__name__)
 
 # FIXME: range or explicit volume values should be configered per amp series in yaml
 MAX_VOLUME = 100
-
-MUTE_KEY = 'mute'
-VOLUME_KEY = 'volume'
-POWER_KEY = 'power'
-SOURCE_KEY = 'source'
-ZONE_KEY = 'zone'
 
 class AmpControlBase(object):
     """
