@@ -6,67 +6,71 @@ import functools
 import serial
 from serial_asyncio import create_serial_connection
 
+
 LOG = logging.getLogger(__name__)
 
 CONF_EOL = 'command_eol'
 CONF_THROTTLE_RATE = 'min_time_between_commands'
 
-async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_config, loop):
+DEFAULT_TIMEOUT=1.0
 
-    lock = asyncio.Lock()
+# FIXME: a single thread should be writing to the device
 
-    def locked_coro(coro):
-        """While this is asynchronous, ensure only a single, ordered command is sent to RS232 at a time (non-reentrant lock)"""
-        @wraps(coro)
-        async def wrapper(*args, **kwargs):
-            LOG.debug("Waiting on coro lock: %s %s", args, kwargs)
-            with (await lock):
-                LOG.debug("Lock acquired! %s %s", args, kwargs)
-                return (await coro(*args, **kwargs))
+async def get_async_rs232_protocol(serial_port, serial_config, protocol_config, loop):
+
+    # ensure only a single, ordered command is sent to RS232 at a time (non-reentrant lock)
+    def locked_access(method):
+        @functools.wraps(method)
+        def wrapper(self, *method_args, **method_kwargs):
+            with (await self._lock):
+                return await method(self, *method_args, **method_kwargs)
         return wrapper
 
     class RS232ControlProtocol(asyncio.Protocol):
-        def __init__(self, serial_port_url, protocol_config, loop):
+        def __init__(self, serial_port, protocol_config, loop):
             super().__init__()
 
-            self._serial_port_url = serial_port_url
+            self._serial_port = serial_port
             self._config = protocol_config
             self._loop = loop
 
-            self._timeout = self._config.get('timeout')
-            if self._timeout is None:
-                self._timeout = 1.0 # default to 1 second if None
-            LOG.info(f"Timeout set to {self._timeout}")
-            
             self._last_send = time.time() - 1
+            self._timeout = self._config.get('timeout', DEFAULT_TIMEOUT)
+            LOG.info(f"Timeout set to {self._timeout}")            
 
-            self._lock = asyncio.Lock()
             self._transport = None
             self._connected = asyncio.Event(loop=loop)
             self._q = asyncio.Queue(loop=loop)
 
+            # ensure only a single, ordered command is sent to RS232 at a time (non-reentrant lock)
+            self._lock = asyncio.Lock()
+
         def connection_made(self, transport):
             self._transport = transport
+            LOG.debug(f"Port {self._serial_port} opened {self._transport}")
             self._connected.set()
-            LOG.debug(f"Port {self._serial_port_url} opened {self._transport}")
 
         def data_received(self, data):
-#            LOG.debug(f"Received from {self._serial_port_url}: {data}")
+#            LOG.debug(f"Received from {self._serial_port}: {data}")
             asyncio.ensure_future(self._q.put(data), loop=self._loop)
 
         def connection_lost(self, exc):
-            LOG.debug(f"Port {self._serial_port_url} closed")
+            LOG.debug(f"Port {self._serial_port} closed")
 
-#        @locked_coro
+        @locked_access
         async def send(self, request: bytes, wait_for_reply=True, skip=0):
-            data = bytearray()
-            eol = self._config[CONF_EOL].encode('ascii')
             min_time_between_commands = self._config[CONF_THROTTLE_RATE]
 
-            await self._connected.wait()
+            # check if connected, and abort if no connection before timeout
+            try:
+                await asyncio.wait_for(self._connected.wait(), self._timeout)
+            except:
+                LOG.debug(f"Timeout waiting to send data to {self._serial_port}, no connection!")
+                return
 
-            # only one write/read at a time
+            # only one writer/reader at a time
             with (await self._lock):
+
                 # clear all buffers of any data waiting to be read before sending the request
                 self._transport.serial.reset_output_buffer()
                 self._transport.serial.reset_input_buffer()
@@ -95,14 +99,24 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
                 if request in [ "P1P1\n", "P2P1\n", "P1P3\n" ]:
                     self._last_send = time.time() + self._config['delay_after_power_on']
 
-                if not wait_for_reply:
-                    return
+            if not wait_for_reply:
+                return
+
+            return self.read()
+
+        @locked_access
+        async def read(self):
+            # only one writer/reader at a time
+            with (await self._lock):
+
+                data = bytearray()
+                eol = self._config[CONF_EOL].encode('ascii')
 
                 # read the response
                 try:
                     while True:
                         data += await asyncio.wait_for(self._q.get(), self._timeout, loop=self._loop)
-#                        LOG.debug("Partial receive %s", bytes(data).decode('ascii'))
+#                       LOG.debug("Partial receive %s", bytes(data).decode('ascii'))
                         if eol in data:
                             # only return the first line
                             result_lines = data.split(eol)
@@ -110,13 +124,14 @@ async def get_async_rs232_protocol(serial_port_url, serial_config, protocol_conf
                                 LOG.debug("Multiple response lines, ignore all but the first: %s", result_lines)
 
                             result = result_lines[0].decode('ascii')
-#                            LOG.debug('Received "%s"', result)
+#                           LOG.debug('Received "%s"', result)
                             return result
                 except asyncio.TimeoutError:
                     LOG.error("Timeout receiving response for '%s': received='%s'", request, data)
                     raise
 
-    factory = functools.partial(RS232ControlProtocol, serial_port_url, protocol_config, loop)
-    LOG.debug(f"Creating RS232 connection to {serial_port_url}: {serial_config}")
-    _, protocol = await create_serial_connection(loop, factory, serial_port_url, **serial_config)
+
+    factory = functools.partial(RS232ControlProtocol, serial_port, protocol_config, loop)
+    LOG.debug(f"Creating RS232 connection to {serial_port}: {serial_config}")
+    _, protocol = await create_serial_connection(loop, factory, serial_port, **serial_config)
     return protocol

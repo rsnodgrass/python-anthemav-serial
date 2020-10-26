@@ -289,18 +289,6 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
     serial_config = config['rs232_defaults']
     if serial_config_overrides:
         serial_config.update( serial_config_overrides )
-    
-    lock = asyncio.Lock()
-
-    def locked_coro(coro):
-        """While this is asynchronous, ensure only a single, ordered command is sent to RS232 at a time (non-reentrant lock)"""
-        @wraps(coro)
-        async def wrapper(*args, **kwargs):
-            LOG.debug("Waiting on coro lock: %s %s", args, kwargs)
-            with (await lock):
-               LOG.debug("Lock acquired! %s %s", args, kwargs)
-               return (await coro(*args, **kwargs))
-        return wrapper
 
     class AmpControlAsync(AmpControlBase):
         def __init__(self, protocol_type, protocol):
@@ -308,9 +296,6 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
             self._protocol = protocol
             self._last_send = time.time() - 1
 
-        # NOTE: Callers of _send_command() shouldn't have @locked_coro, as the lock isn't re-entrant.
-        # This almost could move to the protocol layer as only sending/receiving should be locked.
-        @locked_coro
         async def send_command(self, command: str, args = {}, wait_for_reply=True):
             cmd = _format(self._protocol_type, command, args)
             LOG.debug("Sending command %s", cmd)
@@ -340,7 +325,6 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
                 cmd = 'mute_off'
             await self.send_command(cmd, args = { ZONE_KEY: zone }, wait_for_reply=False)
 
-        @locked_coro
         async def set_volume(self, zone: int, volume: int):
             request = _set_volume_cmd(self._protocol_type, zone, volume)
             await self._protocol.send(request, wait_for_reply=False)
