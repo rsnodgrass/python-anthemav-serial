@@ -123,10 +123,10 @@ def _handle_message(protocol_type, text: str):
     LOG.info(f"Found no pattern matching response: {text}")
     return None
 
-def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
+def get_amp_controller(amp_series: str, serial_port_path, serial_config_overrides = {}):
     """
     Return synchronous version of amplifier control interface
-    :param port_url: serial port, i.e. '/dev/ttyUSB0'
+    :param serial_port_path: serial port, i.e. '/dev/ttyUSB0'
     :return: synchronous implementation of amplifier control interface
     """
 
@@ -153,12 +153,13 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
         return wrapper
 
     class AmpControlSync(AmpControlBase):
-        def __init__(self, protocol_type, port_url, serial_config):
+        def __init__(self, protocol_type, serial_port_path, serial_config):
             self._protocol_type = protocol_type
+            self._serial_port_path = serial_port_path
             self._config = PROTOCOL_CONFIG[protocol_type]
 
-            LOG.debug(f"Creating RS232 connection to {port_url}: {serial_config}")
-            self._port = serial.serial_for_url(port_url, **serial_config)
+            LOG.debug(f"Creating RS232 connection to {serial_port_path}: {serial_config}")
+            self._port = serial.serial_for_url(serial_port_path, **serial_config)
 
         def _send_request(self, request: bytes, wait_for_reply, skip=0):
             """
@@ -194,18 +195,20 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
                 result += c
                 if len(result) > skip and result[-len_eol:] == eol:
                     break
-
+w
             ret = bytes(result)
             LOG.debug('Received "%s"', ret)
             return ret.decode('ascii')
 
         @synchronized
         def is_connected(self):
-            version = self.send_command('query_version')
+            self.send_command('query_version')
+            version = self.read()
             if version:
-                # returns: unit type, version, build date   (AVM 2,Version 1.00,Jun 26 2000)
-                LOG.debug(f"amp.is_connected returned {version}")
-                return version.contain('(')
+                # command returns: unit type, version, build date   (AVM 2,Version 1.00,Jun 26 2000)
+                connected = '(AVM' in version
+                LOG.debug(f"{self._serial_port_path} is_connected() == {connected} {version}")
+                return connected
             return False
 
         @synchronized
@@ -266,21 +269,21 @@ def get_amp_controller(amp_series: str, port_url, serial_config_overrides = {}):
             result[POWER_KEY] = True # must manually inject power status if on, since this is implied by a response
             return result
         
-    return AmpControlSync(protocol_type, port_url, serial_config)
+    return AmpControlSync(protocol_type, serial_port_path, serial_config)
 
 
 
-async def get_async_amp_controller(amp_series, port_url, loop, serial_config_overrides = {}):
+async def get_async_amp_controller(amp_series, serial_port_path, loop, serial_config_overrides = {}):
     """
     Return asynchronous version of amplifier control interface
-    :param port_url: serial port, i.e. '/dev/ttyUSB0'
+    :param serial_port_path: serial port, i.e. '/dev/ttyUSB0'
     :return: asynchronous implementation of amplifier control interface
     """
 
     # sanity check the provided amplifier type
     config = DEVICE_CONFIG[amp_series]
     if not config:
-        LOG.error(f"Invalid Anthem amp series '{amp_series}', cannot get controller")
+        LOG.error(f"Invalid Anthem amp series '{amp_series}', cannot get controller!")
         return None
 
     protocol_type = config['rs232_protocol']
@@ -292,19 +295,23 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
 
     class AmpControlAsync(AmpControlBase):
         def __init__(self, protocol_type, protocol):
-            self._protocol_type = protocol_type            
+            self._protocol_type = protocol_type
             self._protocol = protocol
-            self._last_send = time.time() - 1
 
-        async def send_command(self, command: str, args = {}, wait_for_reply=True):
+        async def send_command(self, command: str, args = {}, wait_for_reply=False):
             cmd = _format(self._protocol_type, command, args)
             LOG.debug("Sending command %s", cmd)
-            response = await self._protocol.send(cmd, wait_for_reply=wait_for_reply)
+            await self._protocol.send(cmd)
+
+            LOG.debug(f"Waiting for reply for {cmd}...")
+            response = await asyncio.wait_for( self._protocol.read(), 1.0 )
+            # response = await self._protocol.read()
+
             LOG.debug(f"Received {cmd} response: {response}")
             return response
 
         async def is_connected(self):
-            version = await self.send_command('query_version')
+            version = await self.send_command('query_version', wait_for_reply=True)
             if version:
                 # returns: unit type, version, build date   (AVM 2,Version 1.00,Jun 26 2000)
                 LOG.debug(f"amp.is_connected returned {version}")
@@ -317,6 +324,15 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
             else:
                 cmd = 'power_off'
             await self.send_command(cmd, args = { ZONE_KEY: zone }, wait_for_reply=False)
+
+            # FIXME: move out of this "generic" code as it should be agnostic to the amp
+            # special case for powering on, since Anthem amps can't accept more RS232 requests
+            # for several seconds after powering up
+            #if request in [ "P1P1\n", "P2P1\n", "P1P3\n" ]:
+            if cmd == 'power_on':
+                self._protocol.delay_requests(2.0) # self._config['delay_after_power_on']
+            
+
 
         async def set_mute(self, zone: int, mute: bool):
             if mute:
@@ -354,7 +370,6 @@ async def get_async_amp_controller(amp_series, port_url, loop, serial_config_ove
             return result
 
 
-        
     LOG.debug(f"About to connect with {serial_config}")
-    protocol = await get_async_rs232_protocol(port_url, serial_config, PROTOCOL_CONFIG[protocol_type], loop)
+    protocol = await get_async_rs232_protocol(serial_port_path, serial_config, PROTOCOL_CONFIG[protocol_type], loop)
     return AmpControlAsync(protocol_type, protocol)
