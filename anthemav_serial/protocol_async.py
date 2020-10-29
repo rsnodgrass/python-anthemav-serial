@@ -8,7 +8,7 @@ import functools
 from ratelimit import limits
 from serial_asyncio import create_serial_connection
 
-from .const import ASCII, CONF_EOL, CONF_THROTTLE_RATE, DEFAULT_TIMEOUT, FIVE_MINUTES
+from .const import ASCII, CONF_EOL, CONF_THROTTLE_RATE, CONF_TIMEOUT, DEFAULT_TIMEOUT, FIVE_MINUTES
 
 LOG = logging.getLogger(__name__)
 
@@ -42,7 +42,7 @@ async def get_sync_rs232_protocol(serial_port_path, serial_config, communication
             self._config = communication_config
             self._loop = loop
 
-            self._timeout = self._config.get('timeout', DEFAULT_TIMEOUT)
+            self._timeout = self._config.get(CONF_TIMEOUT, DEFAULT_TIMEOUT)
             self._last_send = time.time() - self._timeout
 
             self._transport = None

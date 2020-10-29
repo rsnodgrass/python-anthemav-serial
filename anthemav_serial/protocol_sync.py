@@ -4,7 +4,7 @@ import logging
 
 import time
 
-from .const import ASCII, CONF_EOL, CONF_THROTTLE_RATE, DEFAULT_TIMEOUT, FIVE_MINUTES
+from .const import ASCII, CONF_EOL, CONF_THROTTLE_RATE, CONF_TIMEOUT, DEFAULT_TIMEOUT, FIVE_MINUTES
 
 LOG = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ async def get_sync_rs232_protocol(serial_port_path, serial_config, communication
 
             # FIXME: ensure there is an EOL defined
 
-            self._timeout = self._config.get('timeout', DEFAULT_TIMEOUT)
+            self._timeout = self._config.get(CONF_TIMEOUT, DEFAULT_TIMEOUT)
             self._last_send = time.time() - self._timeout
 
             self._port = serial.serial_for_url(serial_port_path, **serial_config)
@@ -47,7 +47,7 @@ async def get_sync_rs232_protocol(serial_port_path, serial_config, communication
                 c = self._port.read(1)
                 if not c:
                     ret = bytes(result)
-                    LOG.info("Serial read result: %s", result)
+                    LOG.info("Received partial: %s", result)
                     raise serial.SerialTimeoutException(
                         'Connection timed out! Last received bytes {}'.format([hex(a) for a in result]))
                 result += c
