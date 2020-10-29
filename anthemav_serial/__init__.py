@@ -11,9 +11,9 @@ import functools
 from functools import wraps
 from threading import RLock
 
-from .config import (DEVICE_CONFIG, PROTOCOL_CONFIG, RS232_RESPONSE_PATTERNS, pattern_to_dictionary, get_with_log)
-from .protocol import get_async_rs232_protocol
 from .const import MUTE_KEY, VOLUME_KEY, POWER_KEY, SOURCE_KEY, ZONE_KEY
+from .config import (DEVICE_CONFIG, PROTOCOL_CONFIG, RS232_RESPONSE_PATTERNS, pattern_to_dictionary, get_with_log)
+from .protocol_async import get_async_rs232_protocol
 
 # FIXME:
 #  - we may want to throttle the RS232 messages per-second, since rapid sending of commands can cause timeouts
@@ -195,7 +195,7 @@ def get_amp_controller(amp_series: str, serial_port_path, serial_config_override
                 result += c
                 if len(result) > skip and result[-len_eol:] == eol:
                     break
-w
+
             ret = bytes(result)
             LOG.debug('Received "%s"', ret)
             return ret.decode('ascii')

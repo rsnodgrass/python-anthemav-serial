@@ -1,11 +1,12 @@
+"""Simple asynchronous RS232 communication mechanism for request/reply style commands"""
+
 import logging
 
 import time
 import asyncio
 import functools
-import serial
-from serial_asyncio import create_serial_connection
 from ratelimit import limits
+from serial_asyncio import create_serial_connection
 
 LOG = logging.getLogger(__name__)
 
@@ -17,7 +18,7 @@ FIVE_MINUTES = 300
 
 ASCII='ascii'
 
-async def get_async_rs232_protocol(serial_port_path, serial_config, protocol_config, loop):
+async def get_sync_rs232_protocol(serial_port_path, serial_config, communication_config, loop):
 
     # ensure only a single, ordered command is sent to RS232 at a time (non-reentrant lock)
     async def locked_method(method):
@@ -39,12 +40,12 @@ async def get_async_rs232_protocol(serial_port_path, serial_config, protocol_con
             return await method(self, *method_args, **method_kwargs)
         return wrapper
 
-    class RS232ControlProtocol(asyncio.Protocol):
-        def __init__(self, serial_port_path, protocol_config, loop):
+    class RS232AsyncProtocol(asyncio.Protocol):
+        def __init__(self, serial_port_path, communication_config, loop):
             super().__init__()
 
             self._serial_port_path = serial_port_path
-            self._config = protocol_config
+            self._config = communication_config
             self._loop = loop
 
             self._timeout = self._config.get('timeout', DEFAULT_TIMEOUT)
@@ -57,7 +58,7 @@ async def get_async_rs232_protocol(serial_port_path, serial_config, protocol_con
             # ensure only a single, ordered command is sent to RS232 at a time (non-reentrant lock)
             #self._lock = asyncio.Lock()
 
-            LOG.info(f"RS232ControlProtocol initialized {serial_port_path}")
+            LOG.info(f"RS232AsyncProtocol initialized {serial_port_path}")
 
         def connection_made(self, transport):
             self._transport = transport
@@ -138,7 +139,7 @@ async def get_async_rs232_protocol(serial_port_path, serial_config, protocol_con
                 return None
 
 
-    LOG.debug(f"Connecting to {serial_port_path}: {serial_config}")
-    factory = functools.partial(RS232ControlProtocol, serial_port_path, protocol_config, loop)
+    LOG.debug(f"Connecting to {serial_port_path}: {serial_config} {communication_config}")
+    factory = functools.partial(RS232AsyncProtocol, serial_port_path, communication_config, loop)
     _, protocol = await create_serial_connection(loop, factory, serial_port_path, **serial_config)
     return protocol

@@ -3,7 +3,7 @@
 import os
 import sys
 
-VERSION = '0.3.11'
+VERSION = '0.3.13'
 
 try:
     from setuptools import setup
