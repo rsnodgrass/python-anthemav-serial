@@ -233,8 +233,7 @@ def get_amp_controller(amp_series: str, serial_port_path, serial_config_override
             result[POWER_KEY] = True # must manually inject power status if on, since this is implied by a response
             return result
 
-
-    serial_client = await get_sync_rs232_protocol(serial_port_path, serial_config, PROTOCOL_CONFIG[protocol_type], loop)
+    serial_client = get_sync_rs232_protocol(serial_port_path, serial_config, PROTOCOL_CONFIG[protocol_type])
     return AmpControlSync(protocol_type, serial_client)
 
 #### ASYNCHRONOUS CLIENT
