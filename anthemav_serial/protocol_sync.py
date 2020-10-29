@@ -2,6 +2,7 @@
 
 import logging
 
+import serial
 import time
 
 from .const import ASCII, CONF_EOL, CONF_THROTTLE_RATE, CONF_TIMEOUT, DEFAULT_TIMEOUT, FIVE_MINUTES
@@ -10,7 +11,7 @@ LOG = logging.getLogger(__name__)
 
 async def get_sync_rs232_protocol(serial_port_path, serial_config, communication_config, loop):
 
-  class RS232SyncProtocol():
+    class RS232SyncProtocol():
         def __init__(self, serial_port_path, serial_config, communication_config):
             self._serial_port_path = serial_port_path
             self._config = communication_config

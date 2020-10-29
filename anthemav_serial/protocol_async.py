@@ -12,7 +12,7 @@ from .const import ASCII, CONF_EOL, CONF_THROTTLE_RATE, CONF_TIMEOUT, DEFAULT_TI
 
 LOG = logging.getLogger(__name__)
 
-async def get_sync_rs232_protocol(serial_port_path, serial_config, communication_config, loop):
+async def get_async_rs232_protocol(serial_port_path, serial_config, communication_config, loop):
 
     # ensure only a single, ordered command is sent to RS232 at a time (non-reentrant lock)
     async def locked_method(method):
