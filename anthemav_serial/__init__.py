@@ -164,7 +164,7 @@ def get_amp_controller(amp_series: str, serial_port_path, serial_config_override
         @synchronized
         def is_connected(self):
             self.send_command('query_version')
-            version = self.read()
+            version = self._serial_client.read()
             if version:
                 # command returns: unit type, version, build date   (AVM 2,Version 1.00,Jun 26 2000)
                 connected = '(AVM' in version
@@ -199,7 +199,7 @@ def get_amp_controller(amp_series: str, serial_port_path, serial_config_override
         @synchronized
         def set_volume(self, zone: int, volume: int):
             request = _set_volume_cmd(self._protocol_type, zone, volume)
-            self._send_request(request, False)
+            self._serial_client.send(request)
 
         @synchronized
         def set_source(self, zone: int, source: int):
@@ -218,7 +218,8 @@ def get_amp_controller(amp_series: str, serial_port_path, serial_config_override
         @synchronized
         def zone_status(self, zone: int) -> dict:
             """Return a dictionary containing status details for the zone"""
-            response = self.send_command('zone_status', { ZONE_KEY: zone })
+            self.send_command('zone_status', { ZONE_KEY: zone })
+            response = self._serial_client.read()
             LOG.debug("Received zone %d status response %s", zone, response)
 
             if "Main Off" in response:
@@ -249,14 +250,14 @@ async def get_async_amp_controller(amp_series, serial_port_path, loop, serial_co
         return None
 
     class AmpControlAsync(AmpControlBase):
-        def __init__(self, protocol_type, protocol):
+        def __init__(self, protocol_type, serial_client):
             self._protocol_type = protocol_type
-            self._protocol = protocol
+            self._serial_client = serial_client
 
         async def send_command(self, command: str, args = {}, wait_for_reply=False):
             cmd = _format(self._protocol_type, command, args)
             LOG.debug("Sending command %s", cmd)
-            await self._protocol.send(cmd)
+            await self._serial_client.send(cmd)
 
             LOG.debug(f"Waiting for reply for {cmd}...")
             response = await asyncio.wait_for( self._protocol.read(), 1.0 )
@@ -285,9 +286,7 @@ async def get_async_amp_controller(amp_series, serial_port_path, loop, serial_co
             # for several seconds after powering up
             #if request in [ "P1P1\n", "P2P1\n", "P1P3\n" ]:
             if cmd == 'power_on':
-                self._protocol.delay_requests(2.0) # self._config['delay_after_power_on']
-            
-
+                self._serial_client.delay_requests(2.0) # self._config['delay_after_power_on']
 
         async def set_mute(self, zone: int, mute: bool):
             if mute:
@@ -298,7 +297,7 @@ async def get_async_amp_controller(amp_series, serial_port_path, loop, serial_co
 
         async def set_volume(self, zone: int, volume: int):
             request = _set_volume_cmd(self._protocol_type, zone, volume)
-            await self._protocol.send(request, wait_for_reply=False)
+            await self._serial_client.send(request, wait_for_reply=False)
 
         async def set_source(self, zone: int, source: int):
             await self.send_command('set_source', args = { ZONE_KEY: zone, SOURCE_KEY: source }, wait_for_reply=False)
