@@ -55,6 +55,7 @@ loop.run_until_complete(main(loop))
 
 ## Known Issues
 
+* deadlock during communication (MAJOR ISSUE)
 * cannot query the existing state of the pre-amps (e.g. current volume, sources, etc)
 
 ## See Also
